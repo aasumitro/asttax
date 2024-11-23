@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/spf13/viper"
@@ -62,59 +60,4 @@ func LoadWith(
 		}
 	})
 	return instance
-}
-
-func SQLiteDBConnection() Option {
-	return func(cfg *Config) {
-		db, err := sql.Open(cfg.DatastoreDriver, cfg.SQLiteDsnURL)
-		if err != nil {
-			log.Fatalf("SQLITE_OPEN_ERROR: %v", err)
-		}
-		// Set SQLite PRAGMA configurations for optimized RW
-		pragmaStatements := []string{
-			"PRAGMA synchronous = OFF;",
-			"PRAGMA journal_mode = WAL;",
-			"PRAGMA temp_store = MEMORY;",
-		}
-		for _, pragma := range pragmaStatements {
-			if _, err := db.Exec(pragma); err != nil {
-				log.Fatalf("SQLITE_PRAGMA_ERROR: %v", err)
-			}
-		}
-		// Configure connection pooling
-		const dbMaxOpenConnection, dbMaxIdleConnection = 100, 10
-		db.SetMaxIdleConns(dbMaxIdleConnection)
-		db.SetMaxOpenConns(dbMaxOpenConnection)
-		db.SetConnMaxLifetime(time.Hour)
-		// Validate the database connection
-		if err := db.Ping(); err != nil {
-			log.Fatalf(fmt.Sprintf("SQLITE_PING_ERROR: %s", err.Error()))
-		}
-		// Assign the configured DB connection to the config
-		cfg.SQLPool = db
-		//
-		if err := cfg.initSQLiteDB(); err != nil {
-			log.Fatalf("SQLITE_INIT_ERROR: %s", err.Error())
-		}
-	}
-}
-
-func (c *Config) initSQLiteDB() error {
-	c.Lock()
-	defer c.Unlock()
-	//goland:noinspection ALL
-	_, err := c.SQLPool.Exec(`CREATE TABLE IF NOT EXISTS users (
-      	id INTEGER PRIMARY KEY,
-      	telegram_id TEXT UNIQUE NOT NULL,
-        wallet_address TEXT UNIQUE NOT NULL,
-        private_key TEXT NOT NULL,
-        trade_fees FLOAT4 NOT NULL DEFAULT 0.0015, -- Fast: 0.0015 SOL, Turbo: 0.0075 SOL, Custom: by user
-        accept_aggrement BOOLEAN DEFAULT FALSE,  -- accept aggrement
-        confirm_trade_protection BOOLEAN DEFAULT FALSE,  -- Confirm Before Continue
-        mev_buy_protection BOOLEAN DEFAULT FALSE,  -- Maximal Extractable Value protection
-        mev_sell_protection BOOLEAN DEFAULT FALSE,  -- Maximal Extractable Value protection
-        buy_slippage INTEGER NOT NULL DEFAULT 15, -- default 15%
-        sell_slippage INTEGER NOT NULL  DEFAULT 15);  -- default 15%
-	CREATE INDEX IF NOT EXISTS idx_uid ON users (telegram_id);`)
-	return err
 }

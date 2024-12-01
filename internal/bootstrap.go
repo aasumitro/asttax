@@ -35,7 +35,7 @@ func Run(ctx context.Context) {
 	updates := bot.GetUpdatesChan(u)
 	// register deps
 	userRepo := sql.NewUserRepository(cfg.SQLPool)
-	userSrv := service.NewUserService(userRepo)
+	userSrv := service.NewUserService(userRepo, cfg.SecretKey)
 	cmdHandler := handler.NewCommandHandler(bot, userSrv)
 	cbHandler := handler.NewCallbackHandler(bot, userSrv)
 	// stream update request

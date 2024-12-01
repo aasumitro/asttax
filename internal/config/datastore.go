@@ -67,7 +67,8 @@ func (c *Config) initSQLiteDB() error {
         sell_amount_p2 FLOAT4 NOT NULL DEFAULT 50, 														-- default 50%
         sell_amount_p3 FLOAT4 NOT NULL DEFAULT 100, 													-- default 100%
         sell_slippage FLOAT4 NOT NULL  DEFAULT 15, 														-- default 15%
-        sell_protection BOOLEAN DEFAULT FALSE); 
+        sell_protection BOOLEAN DEFAULT FALSE,
+    	created_at BIGINT, updated_at BIGINT); 
 	CREATE INDEX IF NOT EXISTS idx_uid ON users (telegram_id);`)
 	return err
 }

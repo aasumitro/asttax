@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
@@ -19,24 +21,35 @@ type Callback struct {
 
 func (h *Callback) AcceptAgreement(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageText(msg.Chat.ID,
-		msg.MessageID, message.ConfirmAgreementTextBody())
+		msg.MessageID, message.ConfirmAgreementCallbackTextBody())
 	reply.ParseMode = common.MessageParseHTML
 	h.reply(reply)
 
-	time.Sleep(time.Second)
+	ctx := context.Background()
+	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	defer done()
 
-	reply = tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.AccountCreatedTextBody(),
-		keyboard.AccountCreatedKeyboardMarkup)
-	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	data, err := h.userSrv.CreateUser(ctxWT, msg)
+	if err != nil {
+		log.Printf("FAILED_CREATE_USER: %v", err)
+		return
+	}
+
+	h.reply(data)
 }
 
 func (h *Callback) Start(msg *tgbotapi.Message) {
-	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID, msg.MessageID,
-		message.StartTextBody(), keyboard.StartKeyboardMarkup)
-	reply.ParseMode = common.MessageParseMarkdown
-	h.reply(reply)
+	ctx := context.Background()
+	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	defer done()
+
+	data, err := h.userSrv.LoadUser(ctxWT, msg, false, false)
+	if err != nil {
+		log.Printf("failed to laod user: %v", err)
+		return
+	}
+
+	h.reply(data)
 }
 
 func (h *Callback) Buy(msg *tgbotapi.Message) {
@@ -51,42 +64,45 @@ func (h *Callback) Positions(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.NoPositionTextBody(), keyboard.PositionKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	h.reply(&reply)
 }
 
 func (h *Callback) NewPair(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.ComingSoonTextBody("New Pair"), keyboard.BackToStartKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	h.reply(&reply)
 }
 
 func (h *Callback) Setting(msg *tgbotapi.Message) {
-	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.SettingTextBody(), keyboard.SettingKeyboardMarkup)
-	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	ctx := context.Background()
+	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	defer done()
+	data, err := h.userSrv.LoadUserSetting(ctxWT,
+		msg, false)
+	if err != nil {
+		log.Printf("failed to laod user: %v", err)
+		return
+	}
+	h.reply(data)
 }
 
 func (h *Callback) LanguageSetting(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.SettingTextBody(), keyboard.LanguageSettingKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	h.reply(&reply)
 }
 
 func (h *Callback) Help(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.HelpTextBody(), keyboard.BackToStartKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	h.reply(&reply)
 }
 
 func (h *Callback) BackToStart(msg *tgbotapi.Message) {
-	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.StartTextBody(), keyboard.StartKeyboardMarkup)
-	reply.ParseMode = common.MessageParseMarkdown
-	h.reply(reply)
+	h.Start(msg)
 }
 
 func (h *Callback) BackToSetting(msg *tgbotapi.Message) {
@@ -94,20 +110,37 @@ func (h *Callback) BackToSetting(msg *tgbotapi.Message) {
 }
 
 func (h *Callback) Refresh(msg *tgbotapi.Message) {
-	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.StartTextBody(), keyboard.StartKeyboardMarkup)
-	reply.ParseMode = common.MessageParseMarkdown
-	h.reply(reply)
+	h.Start(msg)
 }
 
-func (h *Callback) reply(msg tgbotapi.EditMessageTextConfig) {
-	if msg.Text == "" && msg.ChatID == 0 {
-		log.Println(common.ErrNoMsg)
-		return
-	}
-	if _, err := h.bot.Send(msg); err != nil {
-		log.Printf("error sending reply: %v\n", err)
-		return
+func (h *Callback) reply(r interface{}) {
+	fmt.Println(r != nil, reflect.TypeOf(r))
+
+	switch msg := r.(type) {
+	case *tgbotapi.MessageConfig: // Pointer type
+		fmt.Println("sent *MessageConfig")
+		if msg.Text == "" && msg.ChatID == 0 {
+			log.Println(common.ErrNoMsg)
+			return
+		}
+		if _, err := h.bot.Send(msg); err != nil {
+			log.Printf("error sending reply: %v\n", err)
+			return
+		}
+
+	case *tgbotapi.EditMessageTextConfig: // Pointer type
+		fmt.Println("sent *EditMessageTextConfig")
+		if msg.Text == "" && msg.ChatID == 0 {
+			log.Println(common.ErrNoMsg)
+			return
+		}
+		if _, err := h.bot.Send(msg); err != nil {
+			log.Printf("error sending reply: %v\n", err)
+			return
+		}
+
+	default:
+		log.Printf("unexpected reply type: %T", r)
 	}
 }
 

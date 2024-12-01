@@ -1,7 +1,6 @@
 package message
 
-func StartTextBody() string {
-	solanaAddress := "3x6QDiKyZR4vDjtJGXyXcEsQyh4CX2QoxyLjjhVFkqCG"
+func StartTextBody(solanaAddress string) string {
 	solanaURL := "https://solscan.io/account/" + solanaAddress
 	solanaValue := "0 SOL ($0.00)"
 	return "Welcome to AsttaX on Solana! \n\n" +

@@ -25,6 +25,8 @@ type (
 		// DATASTORE URL
 		DatastoreDriver string `mapstructure:"DATASTORE_DRIVER"`
 		SQLiteDsnURL    string `mapstructure:"SQLITE_DSN_URL"`
+		// ENCRYPTION SECRET KEY
+		SecretKey string `mapstructure:"SECRET_KEY"`
 		// APP DEPS
 		SQLPool *sql.DB
 	}

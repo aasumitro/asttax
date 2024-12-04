@@ -31,15 +31,14 @@ type (
 		// API URL
 		CoingeckoAPIURL string `mapstructure:"COINGECKO_API_URL"`
 		// APP DEPS
-		SQLPool *sql.DB
+		SQLPool   *sql.DB
+		CachePool *cache.Cache
 	}
 )
 
 var (
 	configOnce sync.Once
 	instance   *Config
-
-	CachePool *cache.Cache
 )
 
 func LoadWith(

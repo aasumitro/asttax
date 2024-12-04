@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aasumitro/asttax/internal/config"
+	"github.com/aasumitro/asttax/internal/util/cache"
 	solanaRpcClient "github.com/blocto/solana-go-sdk/client"
 )
 
@@ -15,6 +15,7 @@ type ISolanaRPCRepository interface {
 
 type solanaRPCRepository struct {
 	rpcClient *solanaRpcClient.Client
+	cachePool *cache.Cache
 }
 
 func (repo *solanaRPCRepository) GetBalance(
@@ -23,7 +24,7 @@ func (repo *solanaRPCRepository) GetBalance(
 ) (uint64, error) {
 	// from cache
 	cacheKey := fmt.Sprintf("%s_sol_balance", account)
-	if cacheData, ok := config.CachePool.Get(cacheKey); ok {
+	if cacheData, ok := repo.cachePool.Get(cacheKey); ok {
 		if price, ok := cacheData.(uint64); ok {
 			return price, nil
 		}
@@ -36,12 +37,16 @@ func (repo *solanaRPCRepository) GetBalance(
 	// cache data and return
 	cacheDurTime := 10
 	expiredIn := time.Duration(cacheDurTime) * time.Second
-	config.CachePool.Set(cacheKey, solBalance, expiredIn)
+	repo.cachePool.Set(cacheKey, solBalance, expiredIn)
 	return solBalance, nil
 }
 
 func NewSolanaRPCRepository(
 	rpcClient *solanaRpcClient.Client,
+	cachePool *cache.Cache,
 ) ISolanaRPCRepository {
-	return &solanaRPCRepository{rpcClient: rpcClient}
+	return &solanaRPCRepository{
+		rpcClient: rpcClient,
+		cachePool: cachePool,
+	}
 }

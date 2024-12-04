@@ -76,9 +76,9 @@ func (c *Config) initSQLiteDB() error {
 }
 
 func InMemoryCache() Option {
-	return func(_ *Config) {
+	return func(cfg *Config) {
 		workerDuration := 5
 		defaultWorkerInterval := time.Duration(workerDuration) * time.Minute
-		CachePool = cache.New(defaultWorkerInterval, defaultWorkerInterval)
+		cfg.CachePool = cache.New(defaultWorkerInterval, defaultWorkerInterval)
 	}
 }

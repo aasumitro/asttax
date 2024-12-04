@@ -42,8 +42,8 @@ func Run(ctx context.Context) {
 	// register deps
 	rpcClient := client.NewClient(rpc.DevnetRPCEndpoint)
 	userRepo := sqlRepo.NewUserRepository(cfg.SQLPool)
-	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient)
-	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL)
+	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
+	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
 	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
 	cmdHandler := handler.NewCommandHandler(bot, userSrv)
 	cbHandler := handler.NewCallbackHandler(bot, userSrv)

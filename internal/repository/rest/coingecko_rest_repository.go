@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aasumitro/asttax/internal/config"
+	"github.com/aasumitro/asttax/internal/util/cache"
 )
 
 type ICoingeckoRepository interface {
@@ -15,13 +15,14 @@ type ICoingeckoRepository interface {
 }
 
 type coingeckoRepository struct {
-	apiURL string
+	apiURL    string
+	cachePool *cache.Cache
 }
 
 func (repo *coingeckoRepository) GetSolanaPrice(ctx context.Context) (float64, error) {
 	// get data from cache
 	const cacheKey = "sol_usd_price"
-	if cacheData, ok := config.CachePool.Get(cacheKey); ok {
+	if cacheData, ok := repo.cachePool.Get(cacheKey); ok {
 		if price, ok := cacheData.(float64); ok {
 			return price, nil
 		}
@@ -54,10 +55,16 @@ func (repo *coingeckoRepository) GetSolanaPrice(ctx context.Context) (float64, e
 	// cache data and return
 	cacheDurTime := 20
 	expiredIn := time.Duration(cacheDurTime) * time.Second
-	config.CachePool.Set(cacheKey, priceUSD, expiredIn)
+	repo.cachePool.Set(cacheKey, priceUSD, expiredIn)
 	return priceUSD, nil
 }
 
-func NewCoingeckoRepository(apiURL string) ICoingeckoRepository {
-	return &coingeckoRepository{apiURL: apiURL}
+func NewCoingeckoRepository(
+	apiURL string,
+	cachePool *cache.Cache,
+) ICoingeckoRepository {
+	return &coingeckoRepository{
+		apiURL:    apiURL,
+		cachePool: cachePool,
+	}
 }

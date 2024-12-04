@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
@@ -26,7 +25,9 @@ func (h *Callback) AcceptAgreement(msg *tgbotapi.Message) {
 	h.reply(reply)
 
 	ctx := context.Background()
-	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	ctxDur := 5
+	ctxWT, done := context.WithTimeout(ctx,
+		time.Duration(ctxDur)*time.Second)
 	defer done()
 
 	data, err := h.userSrv.CreateUser(ctxWT, msg)
@@ -40,7 +41,9 @@ func (h *Callback) AcceptAgreement(msg *tgbotapi.Message) {
 
 func (h *Callback) Start(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	ctxDur := 5
+	ctxWT, done := context.WithTimeout(ctx,
+		time.Duration(ctxDur)*time.Second)
 	defer done()
 
 	data, err := h.userSrv.LoadUser(ctxWT, msg, false, false)
@@ -76,7 +79,9 @@ func (h *Callback) NewPair(msg *tgbotapi.Message) {
 
 func (h *Callback) Setting(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	ctxDur := 5
+	ctxWT, done := context.WithTimeout(ctx,
+		time.Duration(ctxDur)*time.Second)
 	defer done()
 	data, err := h.userSrv.LoadUserSetting(ctxWT,
 		msg, false)
@@ -114,11 +119,8 @@ func (h *Callback) Refresh(msg *tgbotapi.Message) {
 }
 
 func (h *Callback) reply(r interface{}) {
-	fmt.Println(r != nil, reflect.TypeOf(r))
-
 	switch msg := r.(type) {
-	case *tgbotapi.MessageConfig: // Pointer type
-		fmt.Println("sent *MessageConfig")
+	case *tgbotapi.MessageConfig:
 		if msg.Text == "" && msg.ChatID == 0 {
 			log.Println(common.ErrNoMsg)
 			return
@@ -127,9 +129,7 @@ func (h *Callback) reply(r interface{}) {
 			log.Printf("error sending reply: %v\n", err)
 			return
 		}
-
-	case *tgbotapi.EditMessageTextConfig: // Pointer type
-		fmt.Println("sent *EditMessageTextConfig")
+	case *tgbotapi.EditMessageTextConfig:
 		if msg.Text == "" && msg.ChatID == 0 {
 			log.Println(common.ErrNoMsg)
 			return
@@ -138,7 +138,6 @@ func (h *Callback) reply(r interface{}) {
 			log.Printf("error sending reply: %v\n", err)
 			return
 		}
-
 	default:
 		log.Printf("unexpected reply type: %T", r)
 	}

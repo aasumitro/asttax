@@ -11,8 +11,7 @@ import (
 type IUserRepository interface {
 	Find(ctx context.Context, telegramID int64) (*model.User, error)
 	Insert(ctx context.Context, param *model.User) (*model.User, error)
-	Update(ctx context.Context, param *model.User) (*model.User, error)
-	// Delete(ctx context.Context, telegramID int64) error
+	Update(ctx context.Context, key string, value interface{}, telegramID int64) (*model.User, error)
 }
 
 type userRepository struct {
@@ -46,13 +45,6 @@ func (repo *userRepository) Find(
 	return &user, nil
 }
 
-func (repo *userRepository) Update(
-	_ context.Context,
-	_ *model.User,
-) (*model.User, error) {
-	return nil, nil
-}
-
 func (repo *userRepository) Insert(
 	ctx context.Context,
 	param *model.User,
@@ -68,6 +60,36 @@ func (repo *userRepository) Insert(
 	row := repo.db.QueryRowContext(
 		ctx, query, param.TelegramID, param.AcceptAgreement,
 		param.WalletAddress, param.PrivateKey, time.Now().UnixMilli())
+	var user model.User
+	if err := row.Scan(
+		&user.TelegramID, &user.BotLang, &user.AcceptAgreement,
+		&user.WalletAddress, &user.PrivateKey,
+		&user.TradeFees, &user.CustomTradeFee,
+		&user.MEVBuyProtection, &user.MEVSellProtection, &user.ConfirmTradeProtection,
+		&user.BuyAmountP1, &user.BuyAmountP2, &user.BuyAmountP3,
+		&user.BuyAmountP4, &user.BuyAmountP5, &user.BuyAmountP6, &user.BuySlippage,
+		&user.SellAmountP1, &user.SellAmountP2, &user.SellAmountP3,
+		&user.SellSlippage, &user.SellProtection,
+	); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (repo *userRepository) Update(
+	ctx context.Context,
+	key string,
+	value interface{},
+	telegramID int64,
+) (*model.User, error) {
+	query := `
+	UPDATE users SET $1 = $2, updated_at = $3 WHERE telegram_id = $4 
+	RETURNING telegram_id, bot_language, accept_agreement, wallet_address, private_key,
+	           trade_fees, custom_trade_fee, mev_buy_protection, mev_sell_protection, confirm_trade_protection,
+	           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+	           sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection
+	`
+	row := repo.db.QueryRowContext(ctx, query, key, value, time.Now().UnixMilli(), telegramID)
 	var user model.User
 	if err := row.Scan(
 		&user.TelegramID, &user.BotLang, &user.AcceptAgreement,

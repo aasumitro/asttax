@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"reflect"
 	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
@@ -21,7 +20,9 @@ type Command struct {
 
 func (h *Command) Start(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	ctxDur := 5
+	ctxWT, done := context.WithTimeout(ctx,
+		time.Duration(ctxDur)*time.Second)
 	defer done()
 
 	data, err := h.userSrv.LoadUser(ctxWT,
@@ -52,7 +53,9 @@ func (h *Command) Positions(msg *tgbotapi.Message) {
 
 func (h *Command) Settings(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxWT, done := context.WithTimeout(ctx, time.Second)
+	ctxDur := 5
+	ctxWT, done := context.WithTimeout(ctx,
+		time.Duration(ctxDur)*time.Second)
 	defer done()
 	data, err := h.userSrv.LoadUserSetting(ctxWT,
 		msg, true)
@@ -79,11 +82,8 @@ func (h *Command) Backup(msg *tgbotapi.Message) {
 }
 
 func (h *Command) reply(r interface{}) {
-	fmt.Println(r != nil, reflect.TypeOf(r))
-
 	switch msg := r.(type) {
-	case *tgbotapi.MessageConfig: // Pointer type
-		fmt.Println("sent *MessageConfig")
+	case *tgbotapi.MessageConfig:
 		if msg.Text == "" && msg.ChatID == 0 {
 			log.Println(common.ErrNoMsg)
 			return
@@ -92,9 +92,7 @@ func (h *Command) reply(r interface{}) {
 			log.Printf("error sending reply: %v\n", err)
 			return
 		}
-
-	case *tgbotapi.EditMessageTextConfig: // Pointer type
-		fmt.Println("sent *EditMessageTextConfig")
+	case *tgbotapi.EditMessageTextConfig:
 		if msg.Text == "" && msg.ChatID == 0 {
 			log.Println(common.ErrNoMsg)
 			return
@@ -103,7 +101,6 @@ func (h *Command) reply(r interface{}) {
 			log.Printf("error sending reply: %v\n", err)
 			return
 		}
-
 	default:
 		log.Printf("unexpected reply type: %T", r)
 	}

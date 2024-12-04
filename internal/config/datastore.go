@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"time"
+
+	"github.com/aasumitro/asttax/internal/util/cache"
 )
 
 func SQLiteDBConnection() Option {
@@ -71,4 +73,12 @@ func (c *Config) initSQLiteDB() error {
     	created_at BIGINT, updated_at BIGINT); 
 	CREATE INDEX IF NOT EXISTS idx_uid ON users (telegram_id);`)
 	return err
+}
+
+func InMemoryCache() Option {
+	return func(_ *Config) {
+		workerDuration := 5
+		defaultWorkerInterval := time.Duration(workerDuration) * time.Minute
+		CachePool = cache.New(defaultWorkerInterval, defaultWorkerInterval)
+	}
 }

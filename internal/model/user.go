@@ -38,6 +38,8 @@ func (u *User) ToTradeFee() float64 {
 		tradeFee = 0.0015
 	case "turbo":
 		tradeFee = 0.0075
+	case "custom":
+		tradeFee = u.CustomTradeFee
 	}
 	return tradeFee
 }

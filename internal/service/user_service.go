@@ -7,6 +7,8 @@ import (
 
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/aasumitro/asttax/internal/model"
+	restRepo "github.com/aasumitro/asttax/internal/repository/rest"
+	rpcRepo "github.com/aasumitro/asttax/internal/repository/rpc"
 	sqlrepo "github.com/aasumitro/asttax/internal/repository/sql"
 	"github.com/aasumitro/asttax/internal/template/keyboard"
 	"github.com/aasumitro/asttax/internal/template/message"
@@ -14,6 +16,7 @@ import (
 	"github.com/blocto/solana-go-sdk/types"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/mr-tron/base58"
+	"golang.org/x/sync/errgroup"
 )
 
 type IUserService interface {
@@ -24,6 +27,8 @@ type IUserService interface {
 
 type userService struct {
 	userRepo  sqlrepo.IUserRepository
+	restRepo  restRepo.ICoingeckoRepository
+	rpcRepo   rpcRepo.ISolanaRPCRepository
 	secretKey string
 }
 
@@ -45,7 +50,7 @@ func (srv *userService) LoadUser(
 		return user, nil
 	}
 	// If user exists and has accepted the agreement
-	return srv.createStartMessage(msg, user, cmd), nil
+	return srv.createStartMessage(ctx, msg, user, cmd)
 }
 
 func (srv *userService) createAgreementMessage(
@@ -59,25 +64,34 @@ func (srv *userService) createAgreementMessage(
 }
 
 func (srv *userService) createStartMessage(
+	ctx context.Context,
 	msg *tgbotapi.Message,
 	user *model.User,
 	cmd bool,
-) interface{} {
+) (interface{}, error) {
+	// get user balance
+	balanceSOL, balanceUSD, err := srv.getUserBalance(ctx, user.WalletAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	// if a user presses the menu button
 	if !cmd {
 		reply := tgbotapi.NewEditMessageTextAndMarkup(
 			msg.Chat.ID, msg.MessageID,
-			message.StartTextBody(user.WalletAddress),
+			message.StartTextBody(user.WalletAddress, balanceSOL, balanceUSD),
 			keyboard.StartKeyboardMarkup)
 		reply.ParseMode = common.MessageParseMarkdown
-		return &reply
+		return &reply, nil
 	}
+
 	// if a user uses the main command
-	reply := tgbotapi.NewMessage(msg.Chat.ID, message.StartTextBody(user.WalletAddress))
+	reply := tgbotapi.NewMessage(msg.Chat.ID,
+		message.StartTextBody(user.WalletAddress, balanceSOL, balanceUSD))
 	reply.ParseMode = common.MessageParseMarkdown
 	reply.ReplyMarkup = keyboard.StartKeyboardMarkup
 	reply.ReplyToMessageID = msg.MessageID
-	return &reply
+	return &reply, nil
 }
 
 func (srv *userService) LoadUserSetting(
@@ -136,12 +150,43 @@ func (srv *userService) CreateUser(
 	return &reply, nil
 }
 
+func (srv *userService) getUserBalance(
+	ctx context.Context,
+	walletAddress string,
+) (float64, float64, error) {
+	var err error
+	var balance uint64
+	var solPrice float64
+
+	eg, ctxEG := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		balance, err = srv.rpcRepo.GetBalance(ctxEG, walletAddress)
+		return err
+	})
+	eg.Go(func() error {
+		solPrice, err = srv.restRepo.GetSolanaPrice(ctxEG)
+		return err
+	})
+	if err := eg.Wait(); err != nil {
+		return 0, 0, err
+	}
+
+	currUnit := 1e9
+	balanceSol := float64(balance) / currUnit
+	balanceUsd := balanceSol * solPrice
+	return balanceSol, balanceUsd, nil
+}
+
 func NewUserService(
 	userRepo sqlrepo.IUserRepository,
+	restRepo restRepo.ICoingeckoRepository,
+	rpcRepo rpcRepo.ISolanaRPCRepository,
 	secretKey string,
 ) IUserService {
 	return &userService{
 		userRepo:  userRepo,
+		restRepo:  restRepo,
+		rpcRepo:   rpcRepo,
 		secretKey: secretKey,
 	}
 }

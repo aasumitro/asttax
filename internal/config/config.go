@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/aasumitro/asttax/internal/common"
+	"github.com/aasumitro/asttax/internal/util/cache"
 	"github.com/spf13/viper"
 )
 
@@ -27,6 +28,8 @@ type (
 		SQLiteDsnURL    string `mapstructure:"SQLITE_DSN_URL"`
 		// ENCRYPTION SECRET KEY
 		SecretKey string `mapstructure:"SECRET_KEY"`
+		// API URL
+		CoingeckoAPIURL string `mapstructure:"COINGECKO_API_URL"`
 		// APP DEPS
 		SQLPool *sql.DB
 	}
@@ -35,6 +38,8 @@ type (
 var (
 	configOnce sync.Once
 	instance   *Config
+
+	CachePool *cache.Cache
 )
 
 func LoadWith(

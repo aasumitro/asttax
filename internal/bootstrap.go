@@ -11,15 +11,21 @@ import (
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/aasumitro/asttax/internal/config"
 	"github.com/aasumitro/asttax/internal/handler"
-	"github.com/aasumitro/asttax/internal/repository/sql"
+	restRepo "github.com/aasumitro/asttax/internal/repository/rest"
+	rpcRepo "github.com/aasumitro/asttax/internal/repository/rpc"
+	sqlRepo "github.com/aasumitro/asttax/internal/repository/sql"
 	"github.com/aasumitro/asttax/internal/service"
+	"github.com/blocto/solana-go-sdk/client"
+	"github.com/blocto/solana-go-sdk/rpc"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func Run(ctx context.Context) {
 	defer handlePanic()
 	// load and init config
-	cfg := config.LoadWith(ctx, config.SQLiteDBConnection())
+	cfg := config.LoadWith(ctx,
+		config.SQLiteDBConnection(),
+		config.InMemoryCache())
 	log.Printf("Running %s v%s . . .",
 		cfg.ServerName, cfg.ServerVersion)
 	// make context notify
@@ -34,8 +40,11 @@ func Run(ctx context.Context) {
 	u := tgbotapi.NewUpdate(0)
 	updates := bot.GetUpdatesChan(u)
 	// register deps
-	userRepo := sql.NewUserRepository(cfg.SQLPool)
-	userSrv := service.NewUserService(userRepo, cfg.SecretKey)
+	rpcClient := client.NewClient(rpc.DevnetRPCEndpoint)
+	userRepo := sqlRepo.NewUserRepository(cfg.SQLPool)
+	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient)
+	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL)
+	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
 	cmdHandler := handler.NewCommandHandler(bot, userSrv)
 	cbHandler := handler.NewCallbackHandler(bot, userSrv)
 	// stream update request

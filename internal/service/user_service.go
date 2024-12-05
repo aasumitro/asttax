@@ -183,8 +183,9 @@ func (srv *userService) SetTradeFee(
 	msg *tgbotapi.Message,
 	item string,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, "trade_fees",
-		item, msg.Chat.ID)
+	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+		"trade_fees": item,
+	}, msg.Chat.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -195,8 +196,9 @@ func (srv *userService) SetConfirmTrade(
 	ctx context.Context,
 	msg *tgbotapi.Message,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, "confirm_trade_protection",
-		"NOT confirm_trade_protection", msg.Chat.ID)
+	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+		"confirm_trade_protection": "TOGGLE",
+	}, msg.Chat.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,8 +209,9 @@ func (srv *userService) SetSellProtection(
 	ctx context.Context,
 	msg *tgbotapi.Message,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, "sell_protection",
-		"NOT sell_protection", msg.Chat.ID)
+	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+		"sell_protection": "TOGGLE",
+	}, msg.Chat.ID)
 	if err != nil {
 		return nil, err
 	}

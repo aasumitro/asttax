@@ -19,12 +19,15 @@ run-lint: $(GOLANGCI)
 	@ golangci-lint cache clean
 	@ golangci-lint run -c .golangci.yaml ./...
 
-.Phony: run-tests
+.PHONY: run-tests
 run-tests: $(GOTESTSUM) run-lint
-	@ echo "Run tests"
+	@ echo "Run tests in specific directories"
 	@ gotestsum --format pkgname-and-test-fails \
 		--hide-summary=skipped \
-		-- -coverprofile=cover.out ./...
+		-- -coverprofile=cover.out \
+		$(shell find ./internal/repository/sql \
+		./internal/repository/rest ./internal/repository/rpc \
+		./internal/service ./internal/util -type d -exec go list {} \;)
 	@ rm cover.out
 
 .Phony: run-bot

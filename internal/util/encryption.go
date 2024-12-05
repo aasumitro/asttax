@@ -33,24 +33,6 @@ func Encrypt(data, passphrase string) (string, error) {
 	return hex.EncodeToString(ciphertext), nil
 }
 
-// get account from secret
-// secretKey := string(util.NormalizeKey(srv.secretKey))
-//		privateKeyDecrypted, err := util.Decrypt(user.PrivateKey, secretKey)
-//		if err != nil {
-//			fmt.Println("error decrypting private key")
-//			return nil, err
-//		}
-//		privateKeyBytes, err := base58.Decode(privateKeyDecrypted)
-//		if err != nil {
-//			fmt.Println("error decode private key")
-//		}
-//		account, err := types.AccountFromBytes(privateKeyBytes)
-//		if err != nil {
-//			fmt.Println("error get account from base58")
-//		}
-//		fmt.Println(user.WalletAddress)
-//		fmt.Println(account.PublicKey.ToBase58())
-
 func Decrypt(encrypted, passphrase string) (string, error) {
 	key := sha256.Sum256([]byte(passphrase))
 	data, err := hex.DecodeString(encrypted)
@@ -73,3 +55,21 @@ func Decrypt(encrypted, passphrase string) (string, error) {
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	return string(plaintext), err
 }
+
+// get account from secret
+// secretKey := string(util.NormalizeKey(srv.secretKey))
+//		privateKeyDecrypted, err := util.Decrypt(user.PrivateKey, secretKey)
+//		if err != nil {
+//			fmt.Println("error decrypting private key")
+//			return nil, err
+//		}
+//		privateKeyBytes, err := base58.Decode(privateKeyDecrypted)
+//		if err != nil {
+//			fmt.Println("error decode private key")
+//		}
+//		account, err := types.AccountFromBytes(privateKeyBytes)
+//		if err != nil {
+//			fmt.Println("error get account from base58")
+//		}
+//		fmt.Println(user.WalletAddress)
+//		fmt.Println(account.PublicKey.ToBase58())

@@ -17,6 +17,8 @@ type Setting struct {
 }
 
 func (h *Setting) EditTradeFee(msg *tgbotapi.Message, fee string) {
+	h.fallback(msg)
+
 	ctx := context.Background()
 	ctxDur := 5
 	ctxWT, done := context.WithTimeout(ctx,
@@ -28,11 +30,12 @@ func (h *Setting) EditTradeFee(msg *tgbotapi.Message, fee string) {
 		log.Printf("FAILED_UPDATE_USER_DATA: %v", err)
 		return
 	}
-
 	h.reply(data)
 }
 
 func (h *Setting) EditConfirmTrade(msg *tgbotapi.Message) {
+	h.fallback(msg)
+
 	ctx := context.Background()
 	ctxDur := 5
 	ctxWT, done := context.WithTimeout(ctx,
@@ -44,7 +47,6 @@ func (h *Setting) EditConfirmTrade(msg *tgbotapi.Message) {
 		log.Printf("FAILED_UPDATE_USER_DATA: %v", err)
 		return
 	}
-
 	h.reply(data)
 }
 
@@ -65,6 +67,8 @@ func (h *Setting) EditSellSlippage(msg *tgbotapi.Message) {
 }
 
 func (h *Setting) EditSellProtection(msg *tgbotapi.Message) {
+	h.fallback(msg)
+
 	ctx := context.Background()
 	ctxDur := 5
 	ctxWT, done := context.WithTimeout(ctx,
@@ -76,8 +80,14 @@ func (h *Setting) EditSellProtection(msg *tgbotapi.Message) {
 		log.Printf("FAILED_UPDATE_USER_DATA: %v", err)
 		return
 	}
-
 	h.reply(data)
+}
+
+func (h *Setting) fallback(msg *tgbotapi.Message) {
+	txt := "Your update is being processed. Please wait a moment while we apply the changes..."
+	reply := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID, txt)
+	reply.ParseMode = common.MessageParseMarkdown
+	h.reply(&reply)
 }
 
 func (h *Setting) reply(r interface{}) {

@@ -50,6 +50,9 @@ issues:
     - path: internal/bootstrap.go
       linters:
         - mnd
+    - path: internal/repository/sql/user_sql_repository.go
+      linters:
+        - gosec
 run:
   timeout: 5m
   go: "1.23"

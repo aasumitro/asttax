@@ -22,7 +22,7 @@ func (h *Callback) AcceptAgreement(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageText(msg.Chat.ID,
 		msg.MessageID, message.ConfirmAgreementCallbackTextBody())
 	reply.ParseMode = common.MessageParseHTML
-	h.reply(reply)
+	h.reply(&reply)
 
 	ctx := context.Background()
 	ctxDur := 5

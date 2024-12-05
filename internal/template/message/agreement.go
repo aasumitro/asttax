@@ -1,6 +1,10 @@
 package message
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/aasumitro/asttax/internal/common"
+)
 
 func AgreementTextBody() string {
 	return `
@@ -60,24 +64,24 @@ For support or inquiries, please contact us at hello@astta.xyz.
 }
 
 func ConfirmAgreementCallbackTextBody() string {
-	return `
+	return fmt.Sprintf(`
 Welcome to AsttaX. AsttaX enables you to quickly buy or sell tokens and set automations like Limit Orders, DCA, Copy-trading and Sniping.
 
-✅ You've accept our terms, you can now use AsttaX
+%s You've accept our terms, you can now use AsttaX
 
-🟠 <i>Creating AsttaX account and solana wallet please wait . . . . .</i>
-`
+%s <i>Creating AsttaX account and solana wallet please wait . . . . .</i>
+`, common.CheckmarkEmoticon, common.InProgressEmoticon)
 }
 
 func AccountCreatedTextBody(walletAddress, secretKey string) string {
 	return fmt.Sprintf(`
-🟢 <i>Generated your account & wallet</i>
+%s <i>Generated your account & wallet</i>
 
 SOL: %s
 <u><b>Secret Key:</b></u>
 %s
 
 BE SURE TO RETAIN THE INFORMATION ABOVE IN A SAFE PLACE.
-THIS MESSAGE WILL AUTO-DELETE AND NOT BE AVAILABLE IN YOUR CHAT HISTORY AFTER 5 MINUTES.
-`, walletAddress, secretKey)
+THIS MESSAGE WILL AUTO-DELETE AND NOT BE AVAILABLE IN YOUR CHAT HISTORY.
+`, common.EnabledEmoticon, walletAddress, secretKey)
 }

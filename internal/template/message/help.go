@@ -9,7 +9,7 @@ func HelpTextBody() string {
 Check out our <a href="%s">Youtube playlist</a> where we explain it all.
 
 <b><u>Which tokens can I trade?</u></b>
-Any SPL token that is tradeable via Jupiter, including SOL and USDC pairs. We also support directly trading through Raydium if Jupiter fails to find a route. You can trade newly created SOL pairs (not USDC) directly through Raydium.
+Any SPL token that is tradeable via Jupiter, including SOL and USDC pairs.
 
 <b><u>My transaction timed out. What happened?</u></b>
 Transaction timeouts can occur when there is heavy network load or instability. This is simply the nature of the current Solana network.

@@ -1,10 +1,16 @@
 package keyboard
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"fmt"
+
+	"github.com/aasumitro/asttax/internal/common"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 var AgreementKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
 	InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
-		{tgbotapi.NewInlineKeyboardButtonData("✅ Accept Agreement", "accept_agreement")},
+		{tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s Accept Agreement",
+			common.CheckmarkEmoticon), "accept_agreement")},
 	},
 }
 

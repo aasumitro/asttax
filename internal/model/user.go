@@ -9,11 +9,8 @@ type User struct {
 	WalletAddress string `sql:"wallet_address"`
 	PrivateKey    string `sql:"private_key"`
 	// trade fee
-	TradeFees      string  `sql:"trade_fees"`
-	CustomTradeFee float64 `sql:"custom_trade_fee"`
+	TradeFees string `sql:"trade_fees"`
 	// trade protection
-	MEVBuyProtection       bool `sql:"mev_buy_protection"`
-	MEVSellProtection      bool `sql:"mev_sell_protection"`
 	ConfirmTradeProtection bool `sql:"confirm_trade_protection"`
 	// buy amount
 	BuyAmountP1 float64 `sql:"buy_amount_p1"`
@@ -38,8 +35,6 @@ func (u *User) ToTradeFee() float64 {
 		tradeFee = 0.0015
 	case "turbo":
 		tradeFee = 0.0075
-	case "custom":
-		tradeFee = u.CustomTradeFee
 	}
 	return tradeFee
 }

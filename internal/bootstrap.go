@@ -45,8 +45,9 @@ func Run(ctx context.Context) {
 	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
 	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
 	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
-	cmdHandler := handler.NewCommandHandler(bot, userSrv)
-	cbHandler := handler.NewCallbackHandler(bot, userSrv)
+	commandHandler := handler.NewCommandHandler(bot, userSrv)
+	callbackHandler := handler.NewCallbackHandler(bot, userSrv)
+	settingHandler := handler.NewSettingHandler(bot, userSrv)
 	// stream update request
 	for {
 		select {
@@ -65,11 +66,11 @@ func Run(ctx context.Context) {
 			}
 			// Handling main commands
 			if update.Message != nil && update.Message.IsCommand() {
-				handleCommand(cmdHandler, update.Message)
+				handleCommand(commandHandler, update.Message)
 			}
 			// Handling Callback Queries
 			if update.CallbackQuery != nil {
-				handleCallback(cbHandler, update.CallbackQuery)
+				handleCallback(callbackHandler, settingHandler, update.CallbackQuery)
 			}
 		}
 	}
@@ -108,6 +109,7 @@ func handleCommand(
 
 func handleCallback(
 	h *handler.Callback,
+	hs *handler.Setting,
 	cq *tgbotapi.CallbackQuery,
 ) {
 	switch cq.Data {
@@ -135,5 +137,36 @@ func handleCallback(
 		h.BackToSetting(cq.Message)
 	case common.Refresh:
 		h.Refresh(cq.Message)
+	// settings handler
+	case common.FastTradeFee:
+		hs.EditTradeFee(cq.Message, "fast")
+	case common.TurboTradeFee:
+		hs.EditTradeFee(cq.Message, "turbo")
+	case common.ConfirmTrade:
+		hs.EditConfirmTrade(cq.Message)
+	case common.BuyAmountP1:
+		hs.EditBuyAmount(cq.Message, 1)
+	case common.BuyAmountP2:
+		hs.EditBuyAmount(cq.Message, 2)
+	case common.BuyAmountP3:
+		hs.EditBuyAmount(cq.Message, 3)
+	case common.BuyAmountP4:
+		hs.EditBuyAmount(cq.Message, 4)
+	case common.BuyAmountP5:
+		hs.EditBuyAmount(cq.Message, 5)
+	case common.BuyAmountP6:
+		hs.EditBuyAmount(cq.Message, 6)
+	case common.BuySlippage:
+		hs.EditBuySlippage(cq.Message)
+	case common.SellAmountP1:
+		hs.EditSellAmount(cq.Message, 1)
+	case common.SellAmountP2:
+		hs.EditSellAmount(cq.Message, 2)
+	case common.SellAmountP3:
+		hs.EditSellAmount(cq.Message, 3)
+	case common.SellSlippage:
+		hs.EditSellSlippage(cq.Message)
+	case common.SellProtection:
+		hs.EditSellProtection(cq.Message)
 	}
 }

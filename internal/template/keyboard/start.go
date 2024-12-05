@@ -1,6 +1,11 @@
 package keyboard
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"fmt"
+
+	"github.com/aasumitro/asttax/internal/common"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 var StartKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
 	InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
@@ -13,9 +18,12 @@ var StartKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
 			tgbotapi.NewInlineKeyboardButtonData("Positions", "positions"),
 		},
 		{
-			tgbotapi.NewInlineKeyboardButtonData("⚙️  Settings", "settings"),
-			tgbotapi.NewInlineKeyboardButtonData("📖  Help", "help"),
-			tgbotapi.NewInlineKeyboardButtonData("🔄  Refresh", "refresh"),
+			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s  Settings",
+				common.SettingEmoticon), "settings"),
+			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s  Help",
+				common.HelpEmoticon), "help"),
+			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s  Refresh",
+				common.RefreshEmoticon), "refresh"),
 		},
 	},
 }

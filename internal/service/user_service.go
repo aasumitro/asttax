@@ -23,6 +23,9 @@ type IUserService interface {
 	LoadUser(ctx context.Context, msg *tgbotapi.Message, cmd, raw bool) (interface{}, error)
 	LoadUserSetting(ctx context.Context, msg *tgbotapi.Message, cmd bool) (interface{}, error)
 	CreateUser(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.EditMessageTextConfig, error)
+	SetTradeFee(ctx context.Context, msg *tgbotapi.Message, item string) (interface{}, error)
+	SetConfirmTrade(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
+	SetSellProtection(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
 }
 
 type userService struct {
@@ -37,6 +40,7 @@ func (srv *userService) LoadUser(
 	msg *tgbotapi.Message,
 	cmd, raw bool,
 ) (interface{}, error) {
+	// get user data form database
 	user, err := srv.userRepo.Find(ctx, msg.Chat.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
@@ -74,20 +78,16 @@ func (srv *userService) createStartMessage(
 	if err != nil {
 		return nil, err
 	}
-
 	// if a user presses the menu button
+	msgTxt := message.StartTextBody(user.WalletAddress, balanceSOL, balanceUSD)
 	if !cmd {
-		reply := tgbotapi.NewEditMessageTextAndMarkup(
-			msg.Chat.ID, msg.MessageID,
-			message.StartTextBody(user.WalletAddress, balanceSOL, balanceUSD),
-			keyboard.StartKeyboardMarkup)
+		reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
+			msg.MessageID, msgTxt, keyboard.StartKeyboardMarkup)
 		reply.ParseMode = common.MessageParseMarkdown
 		return &reply, nil
 	}
-
 	// if a user uses the main command
-	reply := tgbotapi.NewMessage(msg.Chat.ID,
-		message.StartTextBody(user.WalletAddress, balanceSOL, balanceUSD))
+	reply := tgbotapi.NewMessage(msg.Chat.ID, msgTxt)
 	reply.ParseMode = common.MessageParseMarkdown
 	reply.ReplyMarkup = keyboard.StartKeyboardMarkup
 	reply.ReplyToMessageID = msg.MessageID
@@ -99,14 +99,15 @@ func (srv *userService) LoadUserSetting(
 	msg *tgbotapi.Message,
 	cmd bool,
 ) (interface{}, error) {
+	// load user data from database
 	user, err := srv.LoadUser(ctx, msg, true, true)
 	if err != nil {
 		return nil, err
 	}
-
+	// build keyboard menus
 	u := user.(*model.User)
 	replyKeyboard := keyboard.LoadSettingKeyboardMarkup(u)
-
+	// if requested from command, reply with this item
 	if cmd {
 		reply := tgbotapi.NewMessage(msg.Chat.ID, message.SettingTextBody())
 		reply.ParseMode = common.MessageParseHTML
@@ -114,7 +115,7 @@ func (srv *userService) LoadUserSetting(
 		reply.ReplyToMessageID = msg.MessageID
 		return &reply, nil
 	}
-
+	// if request not from command (from a menu) replies with this item
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.SettingTextBody(), replyKeyboard)
 	reply.ParseMode = common.MessageParseHTML
@@ -157,7 +158,7 @@ func (srv *userService) getUserBalance(
 	var err error
 	var balance uint64
 	var solPrice float64
-
+	// get user balance and current solana price
 	eg, ctxEG := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		balance, err = srv.rpcRepo.GetBalance(ctxEG, walletAddress)
@@ -170,11 +171,59 @@ func (srv *userService) getUserBalance(
 	if err := eg.Wait(); err != nil {
 		return 0, 0, err
 	}
-
+	// calculate and convert solana balance into usd
 	currUnit := 1e9
 	balanceSol := float64(balance) / currUnit
 	balanceUsd := balanceSol * solPrice
 	return balanceSol, balanceUsd, nil
+}
+
+func (srv *userService) SetTradeFee(
+	ctx context.Context,
+	msg *tgbotapi.Message,
+	item string,
+) (interface{}, error) {
+	data, err := srv.userRepo.Update(ctx, "trade_fees",
+		item, msg.Chat.ID)
+	if err != nil {
+		return nil, err
+	}
+	return srv.settingMessageReply(data, msg)
+}
+
+func (srv *userService) SetConfirmTrade(
+	ctx context.Context,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	data, err := srv.userRepo.Update(ctx, "confirm_trade_protection",
+		"NOT confirm_trade_protection", msg.Chat.ID)
+	if err != nil {
+		return nil, err
+	}
+	return srv.settingMessageReply(data, msg)
+}
+
+func (srv *userService) SetSellProtection(
+	ctx context.Context,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	data, err := srv.userRepo.Update(ctx, "sell_protection",
+		"NOT sell_protection", msg.Chat.ID)
+	if err != nil {
+		return nil, err
+	}
+	return srv.settingMessageReply(data, msg)
+}
+
+func (srv *userService) settingMessageReply(
+	user *model.User,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	replyKeyboard := keyboard.LoadSettingKeyboardMarkup(user)
+	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
+		msg.MessageID, message.SettingTextBody(), replyKeyboard)
+	reply.ParseMode = common.MessageParseHTML
+	return &reply, nil
 }
 
 func NewUserService(

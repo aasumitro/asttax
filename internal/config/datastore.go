@@ -53,10 +53,7 @@ func (c *Config) initSQLiteDB() error {
         accept_agreement BOOLEAN DEFAULT FALSE,  														-- accept aggrement
         wallet_address TEXT UNIQUE NOT NULL,
         private_key TEXT NOT NULL,
-        trade_fees TEXT NOT NULL CHECK (trade_fees IN ('fast', 'turbo', 'custom'))  DEFAULT 'fast', 	-- Fast: 0.0015 SOL, Turbo: 0.0075 SOL
-        custom_trade_fee FLOAT4 NOT NULL DEFAULT 0, 													-- default 0
-        mev_buy_protection BOOLEAN DEFAULT FALSE,  														-- Maximal Extractable Value protection
-        mev_sell_protection BOOLEAN DEFAULT FALSE,  													-- Maximal Extractable Value protection
+        trade_fees TEXT NOT NULL CHECK (trade_fees IN ('fast', 'turbo'))  DEFAULT 'fast', 				-- Fast: 0.0015 SOL, Turbo: 0.0075 SOL
         confirm_trade_protection BOOLEAN DEFAULT FALSE,													-- Confirm Before Continue
         buy_amount_p1 FLOAT4 NOT NULL DEFAULT 0.25, 													-- default 0.25 SOL
         buy_amount_p2 FLOAT4 NOT NULL DEFAULT 0.5, 														-- default 0.5 SOL

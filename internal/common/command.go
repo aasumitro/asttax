@@ -27,9 +27,22 @@ const (
 	NewPairs         = "new_pairs"
 	BackToStart      = "back_to_start"
 	BackToSetting    = "back_to_setting"
-)
 
-const (
-	MessageParseMarkdown = "Markdown"
-	MessageParseHTML     = "HTML"
+	// all setting commands
+
+	FastTradeFee   = "fast_trade_fee"
+	TurboTradeFee  = "turbo_trade_fee"
+	ConfirmTrade   = "confirm_trade"
+	BuyAmountP1    = "buy_amount_p1"
+	BuyAmountP2    = "buy_amount_p2"
+	BuyAmountP3    = "buy_amount_p3"
+	BuyAmountP4    = "buy_amount_p4"
+	BuyAmountP5    = "buy_amount_p5"
+	BuyAmountP6    = "buy_amount_p6"
+	BuySlippage    = "buy_slippage"
+	SellAmountP1   = "sell_amount_p1"
+	SellAmountP2   = "sell_amount_p2"
+	SellAmountP3   = "sell_amount_p3"
+	SellSlippage   = "sell_slippage"
+	SellProtection = "sell_protection"
 )

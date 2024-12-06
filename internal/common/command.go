@@ -45,4 +45,9 @@ const (
 	SellAmountP3   = "sell_amount_p3"
 	SellSlippage   = "sell_slippage"
 	SellProtection = "sell_protection"
+
+	AwaitingBuySlippage  = "awaiting_buy_slippage"
+	AwaitingBuyAmount    = "awaiting_buy_amount"
+	AwaitingSellSlippage = "awaiting_sell_slippage"
+	AwaitingSellAmount   = "awaiting_sell_amount"
 )

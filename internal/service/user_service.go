@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/aasumitro/asttax/internal/model"
@@ -25,6 +27,8 @@ type IUserService interface {
 	CreateUser(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.EditMessageTextConfig, error)
 	SetTradeFee(ctx context.Context, msg *tgbotapi.Message, item string) (interface{}, error)
 	SetConfirmTrade(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
+	SetBuySlippage(ctx context.Context, prevMsgID int, msg *tgbotapi.Message) (interface{}, error)
+	SetSellSlippage(ctx context.Context, prevMsgID int, msg *tgbotapi.Message) (interface{}, error)
 	SetSellProtection(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
 }
 
@@ -202,6 +206,40 @@ func (srv *userService) SetConfirmTrade(
 	if err != nil {
 		return nil, err
 	}
+	return srv.settingMessageReply(data, msg)
+}
+
+func (srv *userService) SetBuySlippage(
+	ctx context.Context,
+	prevMsgID int,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	num, err := strconv.ParseFloat(msg.Text, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error converting value: %v", err)
+	}
+	data, err := srv.userRepo.Update(ctx, map[string]interface{}{"buy_slippage": num}, msg.Chat.ID)
+	if err != nil {
+		return nil, err
+	}
+	msg.MessageID = prevMsgID
+	return srv.settingMessageReply(data, msg)
+}
+
+func (srv *userService) SetSellSlippage(
+	ctx context.Context,
+	prevMsgID int,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	num, err := strconv.ParseFloat(msg.Text, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error converting value: %v", err)
+	}
+	data, err := srv.userRepo.Update(ctx, map[string]interface{}{"sell_slippage": num}, msg.Chat.ID)
+	if err != nil {
+		return nil, err
+	}
+	msg.MessageID = prevMsgID
 	return srv.settingMessageReply(data, msg)
 }
 

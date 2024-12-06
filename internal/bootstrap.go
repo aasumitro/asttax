@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os/signal"
 	"runtime/debug"
@@ -15,6 +16,7 @@ import (
 	rpcRepo "github.com/aasumitro/asttax/internal/repository/rpc"
 	sqlRepo "github.com/aasumitro/asttax/internal/repository/sql"
 	"github.com/aasumitro/asttax/internal/service"
+	"github.com/aasumitro/asttax/internal/util/cache"
 	"github.com/blocto/solana-go-sdk/client"
 	"github.com/blocto/solana-go-sdk/rpc"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -47,7 +49,7 @@ func Run(ctx context.Context) {
 	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
 	commandHandler := handler.NewCommandHandler(bot, userSrv)
 	callbackHandler := handler.NewCallbackHandler(bot, userSrv)
-	settingHandler := handler.NewSettingHandler(bot, userSrv)
+	settingHandler := handler.NewSettingHandler(bot, userSrv, cfg.CachePool)
 	// stream update request
 	for {
 		select {
@@ -67,10 +69,17 @@ func Run(ctx context.Context) {
 			// Handling main commands
 			if update.Message != nil && update.Message.IsCommand() {
 				handleCommand(commandHandler, update.Message)
+				continue
 			}
 			// Handling Callback Queries
 			if update.CallbackQuery != nil {
 				handleCallback(callbackHandler, settingHandler, update.CallbackQuery)
+				continue
+			}
+			// Handle user responses based on state
+			if update.Message != nil {
+				handleState(update.Message, cfg.CachePool, settingHandler)
+				continue
 			}
 		}
 	}
@@ -157,7 +166,7 @@ func handleCallback(
 	case common.BuyAmountP6:
 		hs.EditBuyAmount(cq.Message, 6)
 	case common.BuySlippage:
-		hs.EditBuySlippage(cq.Message)
+		hs.EditBuySlippage(cq.Data, cq.Message)
 	case common.SellAmountP1:
 		hs.EditSellAmount(cq.Message, 1)
 	case common.SellAmountP2:
@@ -165,8 +174,33 @@ func handleCallback(
 	case common.SellAmountP3:
 		hs.EditSellAmount(cq.Message, 3)
 	case common.SellSlippage:
-		hs.EditSellSlippage(cq.Message)
+		hs.EditSellSlippage(cq.Data, cq.Message)
 	case common.SellProtection:
 		hs.EditSellProtection(cq.Message)
+	}
+}
+
+func handleState(
+	msg *tgbotapi.Message,
+	cache *cache.Cache,
+	hs *handler.Setting,
+) {
+	chatID := msg.Chat.ID
+	key := fmt.Sprintf("%d_state", chatID)
+	var command string
+	if cacheData, ok := cache.Get(key); ok {
+		if cmd, ok := cacheData.(string); ok {
+			command = cmd
+		}
+	}
+	switch command {
+	case common.AwaitingBuySlippage:
+		hs.EditBuySlippage(command, msg)
+	case common.AwaitingBuyAmount:
+	case common.AwaitingSellSlippage:
+		hs.EditSellSlippage(command, msg)
+	case common.AwaitingSellAmount:
+	default:
+		log.Printf("Unknown command: %s", command)
 	}
 }

@@ -118,3 +118,10 @@ var LanguageSettingKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
 			common.BackwardEmoticon), "back_to_setting")},
 	},
 }
+
+var AfterUpdateSettingKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
+	InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+		{tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s Back",
+			common.BackwardEmoticon), "back_to_setting")},
+	},
+}

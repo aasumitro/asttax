@@ -44,6 +44,7 @@ issues:
         - lll
         - govet
         - gosimple
+        - revive
     - path: internal/util/cache/cache.go
       linters:
         - unparam

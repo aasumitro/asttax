@@ -28,7 +28,8 @@ func (repo *coingeckoRepository) GetSolanaPrice(ctx context.Context) (float64, e
 		}
 	}
 	// get data from api
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, repo.apiURL, nil)
+	url := fmt.Sprintf("%s/v3/simple/price?ids=solana&vs_currencies=usd", repo.apiURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create request: %v", err)
 	}

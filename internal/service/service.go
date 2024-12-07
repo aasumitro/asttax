@@ -18,3 +18,11 @@ type IUserService interface {
 	SetSellSlippage(ctx context.Context, prevMsgID int, msg *tgbotapi.Message) (interface{}, error)
 	SetSellProtection(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
 }
+
+type ITransactionService interface {
+	// Sell
+	// Buy
+	// Pairs
+	// Position
+	// Withdraw
+}

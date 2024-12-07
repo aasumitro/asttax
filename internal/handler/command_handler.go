@@ -29,15 +29,17 @@ func (h *Handler) StartCommand(msg *tgbotapi.Message) {
 }
 
 func (h *Handler) BuyCommand(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }
 
 func (h *Handler) SellCommand(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }
 
 func (h *Handler) PositionsCommand(msg *tgbotapi.Message) {
-	reply := tgbotapi.NewMessage(msg.Chat.ID, message.NoPositionTextBody())
+	reply := tgbotapi.NewMessage(msg.Chat.ID, message.NoPositionTextBody)
 	reply.ParseMode = common.MessageParseHTML
 	reply.ReplyMarkup = keyboard.PositionKeyboardMarkup
 	reply.ReplyToMessageID = msg.MessageID
@@ -59,6 +61,7 @@ func (h *Handler) SettingsCommand(msg *tgbotapi.Message) {
 }
 
 func (h *Handler) WithdrawCommand(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }
 
@@ -70,5 +73,6 @@ func (h *Handler) HelpCommand(msg *tgbotapi.Message) {
 }
 
 func (h *Handler) BackupCommand(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }

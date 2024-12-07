@@ -6,6 +6,7 @@ import (
 
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/aasumitro/asttax/internal/service"
+	"github.com/aasumitro/asttax/internal/template/message"
 	"github.com/aasumitro/asttax/internal/util/cache"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -60,27 +61,15 @@ func (h *Handler) promptForUpdate(
 ) {
 	h.cache.Set(stateKey, stateValue, CacheDuration*time.Minute)
 	h.cache.Set(msgKey, msg.MessageID, CacheDuration*time.Minute)
-	txt := `
-*Note:*
-
-Please provide a valid decimal value. Examples include:
-- Whole numbers: 1, 2, 3 . . . 
-- Decimals: 0.0, 1.5, 2.75 . . .
-
-**Important:**  
-- *Sell Slippage*, *Sell Amount*, and *Buy Slippage* must be between 1 and 100.
-- *Buy Amount* must start from 0.1 to ♾️
-
-Kindly send us your update.
-`
-	reply := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID, txt)
+	reply := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID,
+		message.UpdateNotesTextBody)
 	reply.ParseMode = common.MessageParseMarkdown
 	h.reply(&reply)
 }
 
 func (h *Handler) notifyProcessingUpdate(msg *tgbotapi.Message) {
-	txt := "Your update is being processed. Please wait a moment while we apply the changes . . ."
-	reply := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID, txt)
+	reply := tgbotapi.NewEditMessageText(msg.Chat.ID, msg.MessageID,
+		message.UpdateProcessTextBody)
 	reply.ParseMode = common.MessageParseMarkdown
 	h.reply(&reply)
 }

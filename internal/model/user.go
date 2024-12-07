@@ -1,5 +1,10 @@
 package model
 
+const (
+	fastTrade  = "fast"
+	turboTrade = "turbo"
+)
+
 type User struct {
 	// user cred and bot setting
 	TelegramID      int64  `sql:"telegram_id"`
@@ -31,9 +36,9 @@ type User struct {
 func (u *User) ToTradeFee() float64 {
 	tradeFee := 0.0
 	switch u.TradeFees {
-	case "fast":
+	case fastTrade:
 		tradeFee = 0.0015
-	case "turbo":
+	case turboTrade:
 		tradeFee = 0.0075
 	}
 	return tradeFee

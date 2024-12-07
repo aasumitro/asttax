@@ -28,8 +28,6 @@ const (
 	BackToStart      = "back_to_start"
 	BackToSetting    = "back_to_setting"
 
-	// all setting commands
-
 	FastTradeFee   = "fast_trade_fee"
 	TurboTradeFee  = "turbo_trade_fee"
 	ConfirmTrade   = "confirm_trade"

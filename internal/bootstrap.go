@@ -18,7 +18,6 @@ import (
 	"github.com/aasumitro/asttax/internal/service"
 	"github.com/aasumitro/asttax/internal/util/cache"
 	"github.com/blocto/solana-go-sdk/client"
-	"github.com/blocto/solana-go-sdk/rpc"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -28,8 +27,8 @@ func Run(ctx context.Context) {
 	cfg := config.LoadWith(ctx,
 		config.SQLiteDBConnection(),
 		config.InMemoryCache())
-	log.Printf("Running %s v%s . . .",
-		cfg.ServerName, cfg.ServerVersion)
+	log.Printf("Running %s . . .",
+		cfg.GetServerIdentity())
 	// make context notify
 	ctxNC, stop := signal.NotifyContext(ctx,
 		syscall.SIGINT, syscall.SIGTERM)
@@ -41,13 +40,8 @@ func Run(ctx context.Context) {
 	}
 	u := tgbotapi.NewUpdate(0)
 	updates := bot.GetUpdatesChan(u)
-	// register deps
-	rpcClient := client.NewClient(rpc.DevnetRPCEndpoint)
-	userRepo := sqlRepo.NewUserRepository(cfg.SQLPool)
-	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
-	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
-	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
-	commandHandler := handler.NewCommandHandler(bot, userSrv, cfg.CachePool)
+	// register deps build handler
+	commandHandler := registerHandler(bot, cfg)
 	// stream update request
 	for {
 		select {
@@ -88,6 +82,18 @@ func handlePanic() {
 		log.Printf("Recovered from panic: %v\nStack trace:\n%s",
 			r, debug.Stack())
 	}
+}
+
+func registerHandler(
+	bot *tgbotapi.BotAPI,
+	cfg *config.Config,
+) *handler.Handler {
+	rpcClient := client.NewClient(cfg.GetRPCEndpoint())
+	userRepo := sqlRepo.NewUserRepository(cfg.SQLPool)
+	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
+	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
+	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
+	return handler.NewCommandHandler(bot, userSrv, cfg.CachePool)
 }
 
 func handleCommand(

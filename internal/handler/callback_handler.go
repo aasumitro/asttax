@@ -25,7 +25,7 @@ func (h *Handler) AcceptAgreementCallback(msg *tgbotapi.Message) {
 
 	data, err := h.userSrv.CreateUser(ctxWT, msg)
 	if err != nil {
-		log.Printf("FAILED_CREATE_USER: %v", err)
+		log.Printf("failed to create user: %v", err)
 		return
 	}
 
@@ -48,23 +48,27 @@ func (h *Handler) StartCallback(msg *tgbotapi.Message) {
 }
 
 func (h *Handler) BuyCallback(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }
 
 func (h *Handler) SellCallback(msg *tgbotapi.Message) {
+	// TODO
 	fmt.Println(msg.Chat.ID)
 }
 
 func (h *Handler) PositionsCallback(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.NoPositionTextBody(), keyboard.PositionKeyboardMarkup)
+		msg.MessageID, message.NoPositionTextBody,
+		keyboard.PositionKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
 	h.reply(&reply)
 }
 
 func (h *Handler) NewPairCallback(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.ComingSoonTextBody("New Pair"), keyboard.BackToStartKeyboardMarkup)
+		msg.MessageID, message.ComingSoonTextBody("New Pair"),
+		keyboard.BackToStartKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
 	h.reply(&reply)
 }

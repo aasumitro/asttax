@@ -7,22 +7,15 @@ import (
 	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
-	"github.com/aasumitro/asttax/internal/service"
 	"github.com/aasumitro/asttax/internal/template/keyboard"
 	"github.com/aasumitro/asttax/internal/template/message"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type Command struct {
-	bot     *tgbotapi.BotAPI
-	userSrv service.IUserService
-}
-
-func (h *Command) Start(msg *tgbotapi.Message) {
+func (h *Handler) StartCommand(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxDur := 5
 	ctxWT, done := context.WithTimeout(ctx,
-		time.Duration(ctxDur)*time.Second)
+		ContextDuration*time.Second)
 	defer done()
 
 	data, err := h.userSrv.LoadUser(ctxWT,
@@ -35,15 +28,15 @@ func (h *Command) Start(msg *tgbotapi.Message) {
 	h.reply(data)
 }
 
-func (h *Command) Buy(msg *tgbotapi.Message) {
+func (h *Handler) BuyCommand(msg *tgbotapi.Message) {
 	fmt.Println(msg.Chat.ID)
 }
 
-func (h *Command) Sell(msg *tgbotapi.Message) {
+func (h *Handler) SellCommand(msg *tgbotapi.Message) {
 	fmt.Println(msg.Chat.ID)
 }
 
-func (h *Command) Positions(msg *tgbotapi.Message) {
+func (h *Handler) PositionsCommand(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewMessage(msg.Chat.ID, message.NoPositionTextBody())
 	reply.ParseMode = common.MessageParseHTML
 	reply.ReplyMarkup = keyboard.PositionKeyboardMarkup
@@ -51,11 +44,10 @@ func (h *Command) Positions(msg *tgbotapi.Message) {
 	h.reply(&reply)
 }
 
-func (h *Command) Settings(msg *tgbotapi.Message) {
+func (h *Handler) SettingsCommand(msg *tgbotapi.Message) {
 	ctx := context.Background()
-	ctxDur := 5
 	ctxWT, done := context.WithTimeout(ctx,
-		time.Duration(ctxDur)*time.Second)
+		ContextDuration*time.Second)
 	defer done()
 	data, err := h.userSrv.LoadUserSetting(ctxWT,
 		msg, true)
@@ -66,49 +58,17 @@ func (h *Command) Settings(msg *tgbotapi.Message) {
 	h.reply(data)
 }
 
-func (h *Command) Withdraw(msg *tgbotapi.Message) {
+func (h *Handler) WithdrawCommand(msg *tgbotapi.Message) {
 	fmt.Println(msg.Chat.ID)
 }
 
-func (h *Command) Help(msg *tgbotapi.Message) {
+func (h *Handler) HelpCommand(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewMessage(msg.Chat.ID, message.HelpTextBody())
 	reply.ParseMode = common.MessageParseHTML
 	reply.ReplyMarkup = keyboard.BackToStartKeyboardMarkup
 	h.reply(&reply)
 }
 
-func (h *Command) Backup(msg *tgbotapi.Message) {
+func (h *Handler) BackupCommand(msg *tgbotapi.Message) {
 	fmt.Println(msg.Chat.ID)
-}
-
-func (h *Command) reply(r interface{}) {
-	switch msg := r.(type) {
-	case *tgbotapi.MessageConfig:
-		if msg.Text == "" && msg.ChatID == 0 {
-			log.Println(common.ErrNoMsg)
-			return
-		}
-		if _, err := h.bot.Send(msg); err != nil {
-			log.Printf("error sending reply: %v\n", err)
-			return
-		}
-	case *tgbotapi.EditMessageTextConfig:
-		if msg.Text == "" && msg.ChatID == 0 {
-			log.Println(common.ErrNoMsg)
-			return
-		}
-		if _, err := h.bot.Send(msg); err != nil {
-			log.Printf("error sending reply: %v\n", err)
-			return
-		}
-	default:
-		log.Printf("unexpected reply type: %T", r)
-	}
-}
-
-func NewCommandHandler(
-	bot *tgbotapi.BotAPI,
-	userSrv service.IUserService,
-) *Command {
-	return &Command{bot: bot, userSrv: userSrv}
 }

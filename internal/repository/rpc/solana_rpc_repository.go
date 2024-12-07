@@ -35,8 +35,7 @@ func (repo *solanaRPCRepository) GetBalance(
 		return 0.0, err
 	}
 	// cache data and return
-	cacheDurTime := 10
-	expiredIn := time.Duration(cacheDurTime) * time.Second
+	expiredIn := CacheDuration * time.Second
 	repo.cachePool.Set(cacheKey, solBalance, expiredIn)
 	return solBalance, nil
 }

@@ -47,9 +47,7 @@ func Run(ctx context.Context) {
 	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
 	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
 	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
-	commandHandler := handler.NewCommandHandler(bot, userSrv)
-	callbackHandler := handler.NewCallbackHandler(bot, userSrv)
-	settingHandler := handler.NewSettingHandler(bot, userSrv, cfg.CachePool)
+	commandHandler := handler.NewCommandHandler(bot, userSrv, cfg.CachePool)
 	// stream update request
 	for {
 		select {
@@ -73,12 +71,12 @@ func Run(ctx context.Context) {
 			}
 			// Handling Callback Queries
 			if update.CallbackQuery != nil {
-				handleCallback(callbackHandler, settingHandler, update.CallbackQuery)
+				handleCallback(commandHandler, update.CallbackQuery)
 				continue
 			}
 			// Handle user responses based on state
 			if update.Message != nil {
-				handleState(update.Message, cfg.CachePool, settingHandler)
+				handleState(commandHandler, cfg.CachePool, update.Message)
 				continue
 			}
 		}
@@ -93,97 +91,96 @@ func handlePanic() {
 }
 
 func handleCommand(
-	h *handler.Command,
+	h *handler.Handler,
 	msg *tgbotapi.Message,
 ) {
 	switch msg.Command() {
 	case common.Start:
-		h.Start(msg)
+		h.StartCommand(msg)
 	case common.Buy:
-		h.Buy(msg)
+		h.BuyCommand(msg)
 	case common.Sell:
-		h.Sell(msg)
+		h.SellCommand(msg)
 	case common.Positions:
-		h.Positions(msg)
+		h.PositionsCommand(msg)
 	case common.Settings:
-		h.Settings(msg)
+		h.SettingsCommand(msg)
 	case common.Withdraw:
-		h.Withdraw(msg)
+		h.WithdrawCommand(msg)
 	case common.Help:
-		h.Help(msg)
+		h.HelpCommand(msg)
 	case common.Backup:
-		h.Backup(msg)
+		h.BackupCommand(msg)
 	}
 }
 
 func handleCallback(
-	h *handler.Callback,
-	hs *handler.Setting,
+	h *handler.Handler,
 	cq *tgbotapi.CallbackQuery,
 ) {
 	switch cq.Data {
 	case common.AcceptAgreement:
-		h.AcceptAgreement(cq.Message)
+		h.AcceptAgreementCallback(cq.Message)
 	case common.Start:
-		h.Start(cq.Message)
+		h.StartCallback(cq.Message)
 	case common.Buy:
-		h.Buy(cq.Message)
+		h.BuyCallback(cq.Message)
 	case common.Sell:
-		h.Sell(cq.Message)
+		h.SellCallback(cq.Message)
 	case common.Positions:
-		h.Positions(cq.Message)
+		h.PositionsCallback(cq.Message)
 	case common.NewPairs:
-		h.NewPair(cq.Message)
+		h.NewPairCallback(cq.Message)
 	case common.Settings:
-		h.Setting(cq.Message)
+		h.SettingCallback(cq.Message)
 	case common.Help:
-		h.Help(cq.Message)
+		h.HelpCallback(cq.Message)
 	case common.LanguageSettings:
-		h.LanguageSetting(cq.Message)
+		h.LanguageSettingCallback(cq.Message)
 	case common.BackToStart:
-		h.BackToStart(cq.Message)
+		h.BackToStartCallback(cq.Message)
 	case common.BackToSetting:
-		h.BackToSetting(cq.Message)
+		h.BackToSettingCallback(cq.Message)
 	case common.Refresh:
-		h.Refresh(cq.Message)
+		h.RefreshCallback(cq.Message)
 	// settings handler
 	case common.FastTradeFee:
-		hs.EditTradeFee(cq.Message, "fast")
+		h.EditTradeFeeState(cq.Message, "fast")
 	case common.TurboTradeFee:
-		hs.EditTradeFee(cq.Message, "turbo")
+		h.EditTradeFeeState(cq.Message, "turbo")
 	case common.ConfirmTrade:
-		hs.EditConfirmTrade(cq.Message)
+		h.EditConfirmTradeState(cq.Message)
 	case common.BuyAmountP1:
-		hs.EditBuyAmount(cq.Message, 1)
+		h.EditBuyAmountState(cq.Data, cq.Message, 1)
 	case common.BuyAmountP2:
-		hs.EditBuyAmount(cq.Message, 2)
+		h.EditBuyAmountState(cq.Data, cq.Message, 2)
 	case common.BuyAmountP3:
-		hs.EditBuyAmount(cq.Message, 3)
+		h.EditBuyAmountState(cq.Data, cq.Message, 3)
 	case common.BuyAmountP4:
-		hs.EditBuyAmount(cq.Message, 4)
+		h.EditBuyAmountState(cq.Data, cq.Message, 4)
 	case common.BuyAmountP5:
-		hs.EditBuyAmount(cq.Message, 5)
+		h.EditBuyAmountState(cq.Data, cq.Message, 5)
 	case common.BuyAmountP6:
-		hs.EditBuyAmount(cq.Message, 6)
+		h.EditBuyAmountState(cq.Data, cq.Message, 6)
 	case common.BuySlippage:
-		hs.EditBuySlippage(cq.Data, cq.Message)
+		h.EditBuySlippageState(cq.Data, cq.Message)
 	case common.SellAmountP1:
-		hs.EditSellAmount(cq.Message, 1)
+		h.EditSellAmountState(cq.Data, cq.Message, 1)
 	case common.SellAmountP2:
-		hs.EditSellAmount(cq.Message, 2)
+		h.EditSellAmountState(cq.Data, cq.Message, 2)
 	case common.SellAmountP3:
-		hs.EditSellAmount(cq.Message, 3)
+		h.EditSellAmountState(cq.Data, cq.Message, 3)
 	case common.SellSlippage:
-		hs.EditSellSlippage(cq.Data, cq.Message)
+		h.EditSellSlippageState(cq.Data, cq.Message)
 	case common.SellProtection:
-		hs.EditSellProtection(cq.Message)
+		h.EditSellProtectionState(cq.Message)
 	}
 }
 
 func handleState(
-	msg *tgbotapi.Message,
+	h *handler.Handler,
 	cache *cache.Cache,
-	hs *handler.Setting,
+	msg *tgbotapi.Message,
 ) {
 	chatID := msg.Chat.ID
 	key := fmt.Sprintf("%d_state", chatID)
@@ -195,12 +192,12 @@ func handleState(
 	}
 	switch command {
 	case common.AwaitingBuySlippage:
-		hs.EditBuySlippage(command, msg)
+		h.EditBuySlippageState(command, msg)
 	case common.AwaitingBuyAmount:
+		h.EditBuyAmountState(command, msg, 0)
 	case common.AwaitingSellSlippage:
-		hs.EditSellSlippage(command, msg)
+		h.EditSellSlippageState(command, msg)
 	case common.AwaitingSellAmount:
-	default:
-		log.Printf("Unknown command: %s", command)
+		h.EditSellAmountState(command, msg, 0)
 	}
 }

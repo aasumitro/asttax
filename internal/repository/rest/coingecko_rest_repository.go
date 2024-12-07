@@ -33,9 +33,8 @@ func (repo *coingeckoRepository) GetSolanaPrice(ctx context.Context) (float64, e
 	if err != nil {
 		return 0, fmt.Errorf("failed to create request: %v", err)
 	}
-	timeOutDur := 10
 	client := &http.Client{
-		Timeout: time.Duration(timeOutDur) * time.Second, // Set a reasonable timeout
+		Timeout: ContextTimeoutDuration * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -54,8 +53,7 @@ func (repo *coingeckoRepository) GetSolanaPrice(ctx context.Context) (float64, e
 		return 0, fmt.Errorf("SOL price not found in response")
 	}
 	// cache data and return
-	cacheDurTime := 20
-	expiredIn := time.Duration(cacheDurTime) * time.Second
+	expiredIn := CacheDuration * time.Second
 	repo.cachePool.Set(cacheKey, priceUSD, expiredIn)
 	return priceUSD, nil
 }

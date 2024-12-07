@@ -21,17 +21,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type IUserService interface {
-	LoadUser(ctx context.Context, msg *tgbotapi.Message, cmd, raw bool) (interface{}, error)
-	LoadUserSetting(ctx context.Context, msg *tgbotapi.Message, cmd bool) (interface{}, error)
-	CreateUser(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.EditMessageTextConfig, error)
-	SetTradeFee(ctx context.Context, msg *tgbotapi.Message, item string) (interface{}, error)
-	SetConfirmTrade(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
-	SetBuySlippage(ctx context.Context, prevMsgID int, msg *tgbotapi.Message) (interface{}, error)
-	SetSellSlippage(ctx context.Context, prevMsgID int, msg *tgbotapi.Message) (interface{}, error)
-	SetSellProtection(ctx context.Context, msg *tgbotapi.Message) (interface{}, error)
-}
-
 type userService struct {
 	userRepo  sqlrepo.IUserRepository
 	restRepo  restRepo.ICoingeckoRepository
@@ -187,26 +176,32 @@ func (srv *userService) SetTradeFee(
 	msg *tgbotapi.Message,
 	item string,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{
 		"trade_fees": item,
-	}, msg.Chat.ID)
-	if err != nil {
-		return nil, err
-	}
-	return srv.settingMessageReply(data, msg)
+	})
 }
 
 func (srv *userService) SetConfirmTrade(
 	ctx context.Context,
 	msg *tgbotapi.Message,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{
 		"confirm_trade_protection": "TOGGLE",
-	}, msg.Chat.ID)
+	})
+}
+
+func (srv *userService) SetBuyAmount(
+	ctx context.Context,
+	prevMsgID, itemPos int,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	num, err := strconv.ParseFloat(msg.Text, 64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error converting value: %v", err)
 	}
-	return srv.settingMessageReply(data, msg)
+	key := fmt.Sprintf("buy_amount_p%d", itemPos)
+	msg.MessageID = prevMsgID
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{key: num})
 }
 
 func (srv *userService) SetBuySlippage(
@@ -218,12 +213,22 @@ func (srv *userService) SetBuySlippage(
 	if err != nil {
 		return nil, fmt.Errorf("error converting value: %v", err)
 	}
-	data, err := srv.userRepo.Update(ctx, map[string]interface{}{"buy_slippage": num}, msg.Chat.ID)
-	if err != nil {
-		return nil, err
-	}
 	msg.MessageID = prevMsgID
-	return srv.settingMessageReply(data, msg)
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{"buy_slippage": num})
+}
+
+func (srv *userService) SetSellAmount(
+	ctx context.Context,
+	prevMsgID, itemPos int,
+	msg *tgbotapi.Message,
+) (interface{}, error) {
+	num, err := strconv.ParseFloat(msg.Text, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error converting value: %v", err)
+	}
+	key := fmt.Sprintf("sell_amount_p%d", itemPos)
+	msg.MessageID = prevMsgID
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{key: num})
 }
 
 func (srv *userService) SetSellSlippage(
@@ -235,21 +240,25 @@ func (srv *userService) SetSellSlippage(
 	if err != nil {
 		return nil, fmt.Errorf("error converting value: %v", err)
 	}
-	data, err := srv.userRepo.Update(ctx, map[string]interface{}{"sell_slippage": num}, msg.Chat.ID)
-	if err != nil {
-		return nil, err
-	}
 	msg.MessageID = prevMsgID
-	return srv.settingMessageReply(data, msg)
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{"sell_slippage": num})
 }
 
 func (srv *userService) SetSellProtection(
 	ctx context.Context,
 	msg *tgbotapi.Message,
 ) (interface{}, error) {
-	data, err := srv.userRepo.Update(ctx, map[string]interface{}{
+	return srv.executeUpdates(ctx, msg, map[string]interface{}{
 		"sell_protection": "TOGGLE",
-	}, msg.Chat.ID)
+	})
+}
+
+func (srv *userService) executeUpdates(
+	ctx context.Context,
+	msg *tgbotapi.Message,
+	payload map[string]interface{},
+) (interface{}, error) {
+	data, err := srv.userRepo.Update(ctx, payload, msg.Chat.ID)
 	if err != nil {
 		return nil, err
 	}

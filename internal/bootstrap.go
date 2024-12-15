@@ -117,6 +117,8 @@ func handleCommand(
 		h.HelpCommand(msg)
 	case common.Backup:
 		h.BackupCommand(msg)
+	default:
+		fmt.Println(msg.Command())
 	}
 }
 
@@ -133,10 +135,14 @@ func handleCallback(
 		h.BuyCallback(cq.Message)
 	case common.Sell:
 		h.SellCallback(cq.Message)
+	case common.Trenches, common.TrenchesNewPairs:
+		h.TrenchesCallback(cq.Message, common.TrenchesNewPairs)
+	case common.TrenchesIgnitingEngines:
+		h.TrenchesCallback(cq.Message, common.TrenchesIgnitingEngines)
+	case common.TrenchesGraduated:
+		h.TrenchesCallback(cq.Message, common.TrenchesGraduated)
 	case common.Positions:
 		h.PositionsCallback(cq.Message)
-	case common.NewPairs:
-		h.NewPairCallback(cq.Message)
 	case common.Settings:
 		h.SettingCallback(cq.Message)
 	case common.Help:
@@ -164,10 +170,6 @@ func handleCallback(
 		h.EditBuyAmountState(cq.Data, cq.Message, 3)
 	case common.BuyAmountP4:
 		h.EditBuyAmountState(cq.Data, cq.Message, 4)
-	case common.BuyAmountP5:
-		h.EditBuyAmountState(cq.Data, cq.Message, 5)
-	case common.BuyAmountP6:
-		h.EditBuyAmountState(cq.Data, cq.Message, 6)
 	case common.BuySlippage:
 		h.EditBuySlippageState(cq.Data, cq.Message)
 	case common.SellAmountP1:
@@ -180,6 +182,8 @@ func handleCallback(
 		h.EditSellSlippageState(cq.Data, cq.Message)
 	case common.SellProtection:
 		h.EditSellProtectionState(cq.Message)
+	default:
+		fmt.Println(cq.Message)
 	}
 }
 
@@ -205,5 +209,7 @@ func handleState(
 		h.EditSellSlippageState(command, msg)
 	case common.AwaitingSellAmount:
 		h.EditSellAmountState(command, msg, 0)
+	default:
+		fmt.Println(command)
 	}
 }

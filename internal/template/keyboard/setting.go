@@ -73,14 +73,6 @@ func LoadSettingKeyboardMarkup(user *model.User) tgbotapi.InlineKeyboardMarkup {
 					fmt.Sprintf("%.2f SOL %s", user.BuyAmountP4,
 						common.EditEmoticon), common.BuyAmountP4),
 			},
-			{
-				tgbotapi.NewInlineKeyboardButtonData(
-					fmt.Sprintf("%.2f SOL %s", user.BuyAmountP5,
-						common.EditEmoticon), common.BuyAmountP5),
-				tgbotapi.NewInlineKeyboardButtonData(
-					fmt.Sprintf("%.2f SOL %s", user.BuyAmountP6,
-						common.EditEmoticon), common.BuyAmountP6),
-			},
 			{tgbotapi.NewInlineKeyboardButtonData(
 				fmt.Sprintf("Buy Slippage: %.2f%%  %s", user.BuySlippage,
 					common.EditEmoticon), common.BuySlippage)},

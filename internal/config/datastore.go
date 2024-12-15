@@ -59,8 +59,6 @@ func (c *Config) initSQLiteDB() error {
         buy_amount_p2 FLOAT4 NOT NULL DEFAULT 0.5,														-- default 0.5 SOL
         buy_amount_p3 FLOAT4 NOT NULL DEFAULT 1,														-- default 1 SOL
         buy_amount_p4 FLOAT4 NOT NULL DEFAULT 2.5,														-- default 2.5 SOL
-        buy_amount_p5 FLOAT4 NOT NULL DEFAULT 5,														-- default 5 SOL
-        buy_amount_p6 FLOAT4 NOT NULL DEFAULT 10,														-- default 10 SOL
         buy_slippage FLOAT4 NOT NULL DEFAULT 15,														-- default 15%
         sell_amount_p1 FLOAT4 NOT NULL DEFAULT 25,														-- default 25%
         sell_amount_p2 FLOAT4 NOT NULL DEFAULT 50,														-- default 50%

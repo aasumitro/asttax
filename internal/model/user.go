@@ -22,8 +22,6 @@ type User struct {
 	BuyAmountP2 float64 `sql:"buy_amount_p2"`
 	BuyAmountP3 float64 `sql:"buy_amount_p3"`
 	BuyAmountP4 float64 `sql:"buy_amount_p4"`
-	BuyAmountP5 float64 `sql:"buy_amount_p5"`
-	BuyAmountP6 float64 `sql:"buy_amount_p6"`
 	BuySlippage float64 `sql:"buy_slippage"`
 	// sell amount
 	SellAmountP1   float64 `sql:"sell_amount_p1"`

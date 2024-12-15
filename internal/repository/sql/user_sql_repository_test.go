@@ -40,14 +40,14 @@ func (suite *userRepositoryTestSuite) Test_Find_ExpectedReturnDataRows() {
 	user := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(12345, "en", 1, "1w23asd222222233test", "fast",
-			0, 0.25, 0.5, 1, 2.5, 5, 10, 15, 25, 50, 100, 15, 0)
+			0, 0.25, 0.5, 1, 2.5, 15, 25, 50, 100, 15, 0)
 	query := `
     SELECT telegram_id, bot_language, accept_agreement, wallet_address, 
            trade_fees, confirm_trade_protection,
-           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_slippage,
            sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection
     FROM users
     WHERE telegram_id = ?`
@@ -63,14 +63,14 @@ func (suite *userRepositoryTestSuite) Test_Find_ExpectedReturnError() {
 	user := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(nil, nil, nil, nil, nil, nil, nil,
-			nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	query := `
     SELECT telegram_id, bot_language, accept_agreement, wallet_address,
            trade_fees, confirm_trade_protection,
-           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_slippage,
            sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection
     FROM users
     WHERE telegram_id = ?`
@@ -89,16 +89,16 @@ func (suite *userRepositoryTestSuite) Test_Insert_ExpectedReturnDataRows() {
 	rows := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(12345, "en", 1, "1w23asd222222233test", "fast",
-			0, 0.25, 0.5, 1, 2.5, 5, 10, 15, 25, 50, 100, 15, 0)
+			0, 0.25, 0.5, 1, 2.5, 15, 25, 50, 100, 15, 0)
 	query := `
 	INSERT INTO users (telegram_id, accept_agreement, wallet_address, private_key, created_at) 
 	VALUES ($1, $2, $3, $4, $5) 
 	RETURNING telegram_id, bot_language, accept_agreement, wallet_address, 
            trade_fees, confirm_trade_protection,
-           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_slippage,
            sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection
 	`
 	expectedQuery := regexp.QuoteMeta(query)
@@ -121,16 +121,16 @@ func (suite *userRepositoryTestSuite) Test_Insert_ExpectedReturnError() {
 	rows := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(nil, nil, nil, nil, nil, nil, nil, nil,
-			nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+			nil, nil, nil, nil, nil, nil, nil, nil)
 	query := `
 	INSERT INTO users (telegram_id, accept_agreement, wallet_address, private_key, created_at) 
 	VALUES ($1, $2, $3, $4, $5) 
 	RETURNING telegram_id, bot_language, accept_agreement, wallet_address, 
            trade_fees, confirm_trade_protection,
-           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+           buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4,  buy_slippage,
            sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection
 	`
 	expectedQuery := regexp.QuoteMeta(query)
@@ -149,14 +149,14 @@ func (suite *userRepositoryTestSuite) Test_UpdateStr_ExpectedReturnDataRows() {
 	rows := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(12345, "en", 1, "1w23asd222222233test", "fast",
-			0, 0.25, 0.5, 1, 2.5, 5, 10, 15, 25, 50, 100, 15, 0)
+			0, 0.25, 0.5, 1, 2.5, 15, 25, 50, 100, 15, 0)
 	query := `UPDATE users SET trade_fees = $1, updated_at = $2 WHERE telegram_id = $3 
 		RETURNING telegram_id, bot_language, accept_agreement, wallet_address,
 		trade_fees, confirm_trade_protection,
-		buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
+		buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_slippage,
 		sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection`
 	expectedQuery := regexp.QuoteMeta(query)
 	suite.mock.ExpectQuery(expectedQuery).
@@ -174,15 +174,14 @@ func (suite *userRepositoryTestSuite) Test_UpdateBool_ExpectedReturnDataRows() {
 	rows := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
 		AddRow(12345, "en", 1, "1w23asd222222233test", "fast",
-			0, 0.25, 0.5, 1, 2.5, 5, 10, 15, 25, 50, 100, 15, 0)
+			0, 0.25, 0.5, 1, 2.5, 15, 25, 50, 100, 15, 0)
 	query := `UPDATE users SET confirm_trade_protection = NOT confirm_trade_protection, updated_at = $1 WHERE telegram_id = $2 
 		RETURNING telegram_id, bot_language, accept_agreement, wallet_address,
-		trade_fees, confirm_trade_protection,
-		buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
-		sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection`
+		trade_fees, confirm_trade_protection, buy_amount_p1, buy_amount_p2, buy_amount_p3, 
+		buy_amount_p4, buy_slippage, sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection`
 	expectedQuery := regexp.QuoteMeta(query)
 	suite.mock.ExpectQuery(expectedQuery).
 		WithArgs(time.Now().UnixMilli(), 12345).
@@ -199,15 +198,14 @@ func (suite *userRepositoryTestSuite) Test_Update_ExpectedReturnError() {
 	rows := suite.mock.
 		NewRows([]string{"telegram_id", "bot_language", "accept_agreement", "wallet_address",
 			"trade_fees", "confirm_trade_protection",
-			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_amount_p5", "buy_amount_p6", "buy_slippage",
+			"buy_amount_p1", "buy_amount_p2", "buy_amount_p3", "buy_amount_p4", "buy_slippage",
 			"sell_amount_p1", "sell_amount_p2", "sell_amount_p3", "sell_slippage", "sell_protection"}).
-		AddRow(nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		AddRow(nil, nil, nil, nil, nil, nil, nil,
 			nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	query := `UPDATE users SET trade_fees = $1, updated_at = $2 WHERE telegram_id = $3
 		RETURNING telegram_id, bot_language, accept_agreement, wallet_address, 
-		trade_fees, confirm_trade_protection,
-		buy_amount_p1, buy_amount_p2, buy_amount_p3, buy_amount_p4, buy_amount_p5, buy_amount_p6, buy_slippage,
-		sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection`
+		trade_fees, confirm_trade_protection, buy_amount_p1, buy_amount_p2, buy_amount_p3, 
+		buy_amount_p4, buy_slippage, sell_amount_p1, sell_amount_p2, sell_amount_p3, sell_slippage, sell_protection`
 	expectedQuery := regexp.QuoteMeta(query)
 	suite.mock.ExpectQuery(expectedQuery).
 		WithArgs("fast", time.Now().UnixMilli(), 12345).

@@ -57,18 +57,18 @@ func (h *Handler) SellCallback(msg *tgbotapi.Message) {
 	fmt.Println(msg.Chat.ID)
 }
 
-func (h *Handler) PositionsCallback(msg *tgbotapi.Message) {
+func (h *Handler) TrenchesCallback(msg *tgbotapi.Message, state string) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.NoPositionTextBody,
-		keyboard.PositionKeyboardMarkup)
+		msg.MessageID, message.TrenchesTextBody(state),
+		keyboard.TrenchesKeyboardMarkup(state))
 	reply.ParseMode = common.MessageParseHTML
 	h.reply(&reply)
 }
 
-func (h *Handler) NewPairCallback(msg *tgbotapi.Message) {
+func (h *Handler) PositionsCallback(msg *tgbotapi.Message) {
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
-		msg.MessageID, message.ComingSoonTextBody("New Pair"),
-		keyboard.BackToStartKeyboardMarkup)
+		msg.MessageID, message.NoPositionTextBody,
+		keyboard.PositionKeyboardMarkup)
 	reply.ParseMode = common.MessageParseHTML
 	h.reply(&reply)
 }

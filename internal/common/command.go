@@ -24,9 +24,13 @@ const (
 	Help             = "help"
 	Backup           = "backup"
 	Refresh          = "refresh"
-	NewPairs         = "new_pairs"
+	Trenches         = "trenches"
 	BackToStart      = "back_to_start"
 	BackToSetting    = "back_to_setting"
+
+	TrenchesNewPairs        = "trenches_new_pairs"
+	TrenchesIgnitingEngines = "trenches_igniting_engines"
+	TrenchesGraduated       = "trenches_graduated"
 
 	FastTradeFee   = "fast_trade_fee"
 	TurboTradeFee  = "turbo_trade_fee"
@@ -35,8 +39,6 @@ const (
 	BuyAmountP2    = "buy_amount_p2"
 	BuyAmountP3    = "buy_amount_p3"
 	BuyAmountP4    = "buy_amount_p4"
-	BuyAmountP5    = "buy_amount_p5"
-	BuyAmountP6    = "buy_amount_p6"
 	BuySlippage    = "buy_slippage"
 	SellAmountP1   = "sell_amount_p1"
 	SellAmountP2   = "sell_amount_p2"

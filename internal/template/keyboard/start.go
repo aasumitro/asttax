@@ -14,7 +14,7 @@ var StartKeyboardMarkup = tgbotapi.InlineKeyboardMarkup{
 			tgbotapi.NewInlineKeyboardButtonData("Sell", "sell"),
 		},
 		{
-			tgbotapi.NewInlineKeyboardButtonData("New Pairs", "new_pairs"),
+			tgbotapi.NewInlineKeyboardButtonData("Trenches", "trenches"),
 			tgbotapi.NewInlineKeyboardButtonData("Positions", "positions"),
 		},
 		{

@@ -15,4 +15,6 @@ const (
 	BackwardEmoticon   = "⬅️"
 	ForwardEmoticon    = "➡️"
 	EditEmoticon       = "✏️"
+	FireEmoticon       = "🔥"
+	PlantEmoticon      = "🌱"
 )

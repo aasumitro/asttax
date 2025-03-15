@@ -63,6 +63,23 @@ func (h *Handler) SettingsCommand(msg *tgbotapi.Message) {
 func (h *Handler) WithdrawCommand(msg *tgbotapi.Message) {
 	// TODO
 	fmt.Println(msg.Chat.ID)
+	// display list of token
+	// -> after select display
+	// how much to withdraw (50%, 100%, X% [edit]) - first button
+	// full button X {TOKEN_NAME} [edit] - by token size
+	// full button set withdraw address
+	// if total token selected && wallet address set display withdraw button (CAPS)
+	// display notify -
+	//
+	//
+	// Withdraw $SOL — (Solana) 🅴
+	//
+	// Balance: 0 SOL
+	//
+	// 🟠 Sending withdrawal transaction...                  ---- process
+	// 🔴 Withdrawal transaction failed   View on Solscan    ---- error
+	// 🟢 Withdrawal transaction success   View on Solscan   ---- success
+
 }
 
 func (h *Handler) HelpCommand(msg *tgbotapi.Message) {

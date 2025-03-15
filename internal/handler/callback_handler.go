@@ -58,6 +58,7 @@ func (h *Handler) SellCallback(msg *tgbotapi.Message) {
 }
 
 func (h *Handler) TrenchesCallback(msg *tgbotapi.Message, state string) {
+	// TODO: apply from pump fun
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.TrenchesTextBody(state),
 		keyboard.TrenchesKeyboardMarkup(state))
@@ -66,6 +67,7 @@ func (h *Handler) TrenchesCallback(msg *tgbotapi.Message, state string) {
 }
 
 func (h *Handler) PositionsCallback(msg *tgbotapi.Message) {
+	// TODO: apply from main net
 	reply := tgbotapi.NewEditMessageTextAndMarkup(msg.Chat.ID,
 		msg.MessageID, message.NoPositionTextBody,
 		keyboard.PositionKeyboardMarkup)

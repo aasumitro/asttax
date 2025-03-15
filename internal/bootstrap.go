@@ -118,7 +118,7 @@ func handleCommand(
 	case common.Backup:
 		h.BackupCommand(msg)
 	default:
-		fmt.Println(msg.Command())
+		log.Println(msg.Command())
 	}
 }
 
@@ -183,7 +183,7 @@ func handleCallback(
 	case common.SellProtection:
 		h.EditSellProtectionState(cq.Message)
 	default:
-		fmt.Println(cq.Message)
+		log.Println(cq.Message)
 	}
 }
 
@@ -210,6 +210,6 @@ func handleState(
 	case common.AwaitingSellAmount:
 		h.EditSellAmountState(command, msg, 0)
 	default:
-		fmt.Println(command)
+		log.Println(command)
 	}
 }

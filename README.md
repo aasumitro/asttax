@@ -1,4 +1,4 @@
 ## @AsttaX
 
-Advance Solana Telegram Trading Bot
+An Example of Solana Telegram Trading Bot
 

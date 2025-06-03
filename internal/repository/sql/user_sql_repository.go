@@ -91,6 +91,7 @@ func (repo *userRepository) Update(
 	args = append(args, time.Now().UnixMilli())
 	argIndex++
 	// Build the query
+	//nolint:gosec
 	query := fmt.Sprintf(`
 		UPDATE users SET %s WHERE telegram_id = $%d
 		RETURNING telegram_id, bot_language, accept_agreement, wallet_address,

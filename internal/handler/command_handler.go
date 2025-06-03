@@ -79,7 +79,6 @@ func (h *Handler) WithdrawCommand(msg *tgbotapi.Message) {
 	// 🟠 Sending withdrawal transaction...                  ---- process
 	// 🔴 Withdrawal transaction failed   View on Solscan    ---- error
 	// 🟢 Withdrawal transaction success   View on Solscan   ---- success
-
 }
 
 func (h *Handler) HelpCommand(msg *tgbotapi.Message) {

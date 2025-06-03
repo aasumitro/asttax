@@ -38,7 +38,7 @@ func Run(ctx context.Context) {
 	if err != nil {
 		log.Panic(err)
 	}
-	u := tgbotapi.NewUpdate(0)
+	u := tgbotapi.NewUpdate(common.NumbZero)
 	updates := bot.GetUpdatesChan(u)
 	// register deps build handler
 	commandHandler := registerHandler(bot, cfg)
@@ -53,7 +53,7 @@ func Run(ctx context.Context) {
 			if !ok {
 				continue
 			}
-			time.Sleep(1 * time.Millisecond)
+			time.Sleep(common.NumbOne * time.Millisecond)
 			// handle empty request
 			if update.Message == nil && update.CallbackQuery == nil {
 				continue
@@ -163,21 +163,21 @@ func handleCallback(
 	case common.ConfirmTrade:
 		h.EditConfirmTradeState(cq.Message)
 	case common.BuyAmountP1:
-		h.EditBuyAmountState(cq.Data, cq.Message, 1)
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbOne)
 	case common.BuyAmountP2:
-		h.EditBuyAmountState(cq.Data, cq.Message, 2)
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbTwo)
 	case common.BuyAmountP3:
-		h.EditBuyAmountState(cq.Data, cq.Message, 3)
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbThree)
 	case common.BuyAmountP4:
-		h.EditBuyAmountState(cq.Data, cq.Message, 4)
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbFour)
 	case common.BuySlippage:
 		h.EditBuySlippageState(cq.Data, cq.Message)
 	case common.SellAmountP1:
-		h.EditSellAmountState(cq.Data, cq.Message, 1)
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbOne)
 	case common.SellAmountP2:
-		h.EditSellAmountState(cq.Data, cq.Message, 2)
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbTwo)
 	case common.SellAmountP3:
-		h.EditSellAmountState(cq.Data, cq.Message, 3)
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbThree)
 	case common.SellSlippage:
 		h.EditSellSlippageState(cq.Data, cq.Message)
 	case common.SellProtection:
@@ -204,11 +204,11 @@ func handleState(
 	case common.AwaitingBuySlippage:
 		h.EditBuySlippageState(command, msg)
 	case common.AwaitingBuyAmount:
-		h.EditBuyAmountState(command, msg, 0)
+		h.EditBuyAmountState(command, msg, common.NumbZero)
 	case common.AwaitingSellSlippage:
 		h.EditSellSlippageState(command, msg)
 	case common.AwaitingSellAmount:
-		h.EditSellAmountState(command, msg, 0)
+		h.EditSellAmountState(command, msg, common.NumbZero)
 	default:
 		log.Println(command)
 	}

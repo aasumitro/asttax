@@ -5,18 +5,30 @@ import (
 	"fmt"
 	"log"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
 	"github.com/aasumitro/asttax/internal/config"
+	"github.com/aasumitro/asttax/internal/handler"
+	restRepo "github.com/aasumitro/asttax/internal/repository/rest"
+	rpcRepo "github.com/aasumitro/asttax/internal/repository/rpc"
+	sqlRepo "github.com/aasumitro/asttax/internal/repository/sql"
+	"github.com/aasumitro/asttax/internal/service"
+	"github.com/aasumitro/asttax/internal/util/cache"
+	"github.com/blocto/solana-go-sdk/client"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func Run(ctx context.Context) {
-	cfg := config.LoadWith(ctx, config.SQLiteDBConnection())
-	log.Printf("Running %s v%s . . .",
-		cfg.ServerName, cfg.ServerVersion)
+	defer handlePanic()
+	// load and init config
+	cfg := config.LoadWith(ctx,
+		config.SQLiteDBConnection(),
+		config.InMemoryCache())
+	log.Printf("Running %s . . .",
+		cfg.GetServerIdentity())
 	// make context notify
 	ctxNC, stop := signal.NotifyContext(ctx,
 		syscall.SIGINT, syscall.SIGTERM)
@@ -26,116 +38,178 @@ func Run(ctx context.Context) {
 	if err != nil {
 		log.Panic(err)
 	}
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u := tgbotapi.NewUpdate(common.NumbZero)
 	updates := bot.GetUpdatesChan(u)
-
+	// register deps build handler
+	commandHandler := registerHandler(bot, cfg)
+	// stream update request
 	for {
 		select {
 		case <-ctxNC.Done():
 			updates.Clear()
 			return
 		case update, ok := <-updates:
+			// validate updates
 			if !ok {
 				continue
 			}
+			time.Sleep(common.NumbOne * time.Millisecond)
+			// handle empty request
 			if update.Message == nil && update.CallbackQuery == nil {
 				continue
 			}
-			time.Sleep(1 * time.Millisecond)
-
-			// Handling commands (e.g., /start, /help)
+			// Handling main commands
 			if update.Message != nil && update.Message.IsCommand() {
-				var msg tgbotapi.MessageConfig
-				switch update.Message.Command() {
-				case "start":
-					// Create the message object for the /start command
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, mainText())
-					msg.ParseMode = "Markdown"
-					msg.ReplyMarkup = common.StartReplyMarkup
-					msg.ReplyToMessageID = update.Message.MessageID
-				case "help":
-					// Edit the message to show help content when "help" is selected
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpText())
-					msg.ParseMode = "HTML"
-					msg.ReplyMarkup = common.BackReplyMarkup
-				}
-				if msg.Text == "" && msg.ChatID == 0 {
-					log.Println("skip no message")
-					continue
-				}
-				if _, err := bot.Send(msg); err != nil {
-					log.Println(err)
-				}
+				handleCommand(commandHandler, update.Message)
+				continue
 			}
-
-			// Handling Callback Queries for help and back
+			// Handling Callback Queries
 			if update.CallbackQuery != nil {
-				chatID := update.CallbackQuery.Message.Chat.ID
-				data := update.CallbackQuery.Data
-				var editMsg tgbotapi.EditMessageTextConfig
-				switch data {
-				case "help":
-					editMsg = tgbotapi.NewEditMessageTextAndMarkup(chatID,
-						update.CallbackQuery.Message.MessageID, helpText(), common.BackReplyMarkup)
-					editMsg.ParseMode = "HTML"
-				case "refresh":
-					// handle if a new message same as before
-					editMsg = tgbotapi.NewEditMessageTextAndMarkup(chatID,
-						update.CallbackQuery.Message.MessageID, mainText(), common.StartReplyMarkup)
-					editMsg.ParseMode = "Markdown"
-				case "back_to_start":
-					editMsg = tgbotapi.NewEditMessageTextAndMarkup(chatID,
-						update.CallbackQuery.Message.MessageID, mainText(), common.StartReplyMarkup)
-					editMsg.ParseMode = "Markdown"
-				}
-				if editMsg.Text == "" && editMsg.ChatID == 0 {
-					log.Println("skip no message")
-					continue
-				}
-				if _, err := bot.Send(editMsg); err != nil {
-					log.Println(err)
-				}
+				handleCallback(commandHandler, update.CallbackQuery)
+				continue
+			}
+			// Handle user responses based on state
+			if update.Message != nil {
+				handleState(commandHandler, cfg.CachePool, update.Message)
+				continue
 			}
 		}
 	}
 }
 
-func mainText() string {
-	solanaAddress := "3x6QDiKyZR4vDjtJGXyXcEsQyh4CX2QoxyLjjhVFkqCG"
-	solanaURL := "https://solscan.io/account/" + solanaAddress
-	solanaValue := "0 SOL ($0.00)"
-	return "Welcome to AsttaX on Solana! \n\n" +
-		" *Solana* • [🅴](" + solanaURL + ")\n" +
-		"💰`" + solanaAddress + "` _(Tap to copy)_\n" +
-		"🪙Balance: `" + solanaValue + "`\n\n\n" +
-		"Click on the buttons below to navigate:\n" +
-		"• Use the Buy/Sell buttons to trade.\n" +
-		"• Use the Refresh button to update your current balance.\n" +
-		"• Check your positions, set limit orders, and more!\n\n"
+func handlePanic() {
+	if r := recover(); r != nil {
+		log.Printf("Recovered from panic: %v\nStack trace:\n%s",
+			r, debug.Stack())
+	}
 }
 
-func helpText() string {
-	youtubePlaylistURL := "https://www.youtube.com/watch?v=HavGDGUTmgs&list=PLmAMfj0qP2wwfnuRJQge2ss4sJxnhIqyt&ab_channel=Solandy%5Bsolandy.sol%5D"
-	return fmt.Sprintf(`
-📖 <b>Help</b>
+func registerHandler(
+	bot *tgbotapi.BotAPI,
+	cfg *config.Config,
+) *handler.Handler {
+	rpcClient := client.NewClient(cfg.GetRPCEndpoint())
+	userRepo := sqlRepo.NewUserRepository(cfg.SQLPool)
+	solanaRPCRepo := rpcRepo.NewSolanaRPCRepository(rpcClient, cfg.CachePool)
+	coingeckoRESTRepo := restRepo.NewCoingeckoRepository(cfg.CoingeckoAPIURL, cfg.CachePool)
+	userSrv := service.NewUserService(userRepo, coingeckoRESTRepo, solanaRPCRepo, cfg.SecretKey)
+	return handler.NewCommandHandler(bot, userSrv, cfg.CachePool)
+}
 
-<b><u>How do I use AsttaX?</u></b>
-Check out our <a href="%s">Youtube playlist</a> where we explain it all.
+func handleCommand(
+	h *handler.Handler,
+	msg *tgbotapi.Message,
+) {
+	switch msg.Command() {
+	case common.Start:
+		h.StartCommand(msg)
+	case common.Buy:
+		h.BuyCommand(msg)
+	case common.Sell:
+		h.SellCommand(msg)
+	case common.Positions:
+		h.PositionsCommand(msg)
+	case common.Settings:
+		h.SettingsCommand(msg)
+	case common.Withdraw:
+		h.WithdrawCommand(msg)
+	case common.Help:
+		h.HelpCommand(msg)
+	case common.Backup:
+		h.BackupCommand(msg)
+	default:
+		log.Println(msg.Command())
+	}
+}
 
-<b><u>Which tokens can I trade?</u></b>
-Any SPL token that is tradeable via Jupiter, including SOL and USDC pairs. We also support directly trading through Raydium if Jupiter fails to find a route. You can trade newly created SOL pairs (not USDC) directly through Raydium.
+func handleCallback(
+	h *handler.Handler,
+	cq *tgbotapi.CallbackQuery,
+) {
+	switch cq.Data {
+	case common.AcceptAgreement:
+		h.AcceptAgreementCallback(cq.Message)
+	case common.Start:
+		h.StartCallback(cq.Message)
+	case common.Buy:
+		h.BuyCallback(cq.Message)
+	case common.Sell:
+		h.SellCallback(cq.Message)
+	case common.Trenches, common.TrenchesNewPairs:
+		h.TrenchesCallback(cq.Message, common.TrenchesNewPairs)
+	case common.TrenchesIgnitingEngines:
+		h.TrenchesCallback(cq.Message, common.TrenchesIgnitingEngines)
+	case common.TrenchesGraduated:
+		h.TrenchesCallback(cq.Message, common.TrenchesGraduated)
+	case common.Positions:
+		h.PositionsCallback(cq.Message)
+	case common.Settings:
+		h.SettingCallback(cq.Message)
+	case common.Help:
+		h.HelpCallback(cq.Message)
+	case common.LanguageSettings:
+		h.LanguageSettingCallback(cq.Message)
+	case common.BackToStart:
+		h.BackToStartCallback(cq.Message)
+	case common.BackToSetting:
+		h.BackToSettingCallback(cq.Message)
+	case common.Refresh:
+		h.RefreshCallback(cq.Message)
+	// settings handler
+	case common.FastTradeFee:
+		h.EditTradeFeeState(cq.Message, "fast")
+	case common.TurboTradeFee:
+		h.EditTradeFeeState(cq.Message, "turbo")
+	case common.ConfirmTrade:
+		h.EditConfirmTradeState(cq.Message)
+	case common.BuyAmountP1:
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbOne)
+	case common.BuyAmountP2:
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbTwo)
+	case common.BuyAmountP3:
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbThree)
+	case common.BuyAmountP4:
+		h.EditBuyAmountState(cq.Data, cq.Message, common.NumbFour)
+	case common.BuySlippage:
+		h.EditBuySlippageState(cq.Data, cq.Message)
+	case common.SellAmountP1:
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbOne)
+	case common.SellAmountP2:
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbTwo)
+	case common.SellAmountP3:
+		h.EditSellAmountState(cq.Data, cq.Message, common.NumbThree)
+	case common.SellSlippage:
+		h.EditSellSlippageState(cq.Data, cq.Message)
+	case common.SellProtection:
+		h.EditSellProtectionState(cq.Message)
+	default:
+		log.Println(cq.Message)
+	}
+}
 
-<b><u>My transaction timed out. What happened?</u></b>
-Transaction timeouts can occur when there is heavy network load or instability. This is simply the nature of the current Solana network.
-
-<b><u>What are the fees for using AsttaX?</u></b>
-Transactions through Trojan incur a fee of 1%%, or 0.9%% if you were referred by another user. We don't charge a subscription fee or pay-wall any features.
-
-<b><u>My net profit seems wrong, why is that?</u></b>
-The net profit of a trade takes into consideration the trade's transaction fees. Confirm the details of your trade on Solscan.io to verify the net profit.
-
-<b><u>Additional questions or need support?</u></b>
-send us mail hello@astta.xyz and one of our admins can assist you.
-`, youtubePlaylistURL)
+func handleState(
+	h *handler.Handler,
+	cache *cache.Cache,
+	msg *tgbotapi.Message,
+) {
+	chatID := msg.Chat.ID
+	key := fmt.Sprintf("%d_state", chatID)
+	var command string
+	if cacheData, ok := cache.Get(key); ok {
+		if cmd, ok := cacheData.(string); ok {
+			command = cmd
+		}
+	}
+	switch command {
+	case common.AwaitingBuySlippage:
+		h.EditBuySlippageState(command, msg)
+	case common.AwaitingBuyAmount:
+		h.EditBuyAmountState(command, msg, common.NumbZero)
+	case common.AwaitingSellSlippage:
+		h.EditSellSlippageState(command, msg)
+	case common.AwaitingSellAmount:
+		h.EditSellAmountState(command, msg, common.NumbZero)
+	default:
+		log.Println(command)
+	}
 }

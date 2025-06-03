@@ -1,55 +1,75 @@
-linters-settings:
-  dupl:
-    threshold: 800
-  lll:
-    line-length: 450
-  gosec:
-    excludes:
-      - G404
-      - G101
+version: "2"
+run:
+  go: "1.23"
+  modules-download-mode: readonly
 linters:
   enable:
-    - errcheck
-    - dogsled
     - copyloopvar
-    - gocritic
-    - gofmt
-    - goprintffuncname
-    - gosimple
-    - govet
-    - ineffassign
-    - misspell
-    - nakedret
-    - nolintlint
-    - staticcheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - whitespace
+    - dogsled
     - dupl
     - goconst
-    - lll
-    - noctx
-    - mnd
+    - gocritic
+    - goprintffuncname
     - gosec
+    - lll
+    - misspell
+    - mnd
+    - nakedret
+    - noctx
+    - nolintlint
     - revive
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gomnd
+    - unconvert
+    - unparam
+    - whitespace
+  settings:
+    dupl:
+      threshold: 800
+    gosec:
+      excludes:
+        - G404
+        - G101
+    lll:
+      line-length: 450
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+        - dupl
+        - goconst
+        - govet
+        - lll
+        - mnd
+        - staticcheck
+        - revive
+
+      - path: ./internal/util/cache/cache.go
+        linters:
+        - mnd
         - dupl
         - goconst
         - lll
         - govet
-    - path: internal/security/totp.go
-      linters:
-        - mnd
-    - path: internal/worker/notification/email.go
-      linters:
-        - gosec
-run:
-  timeout: 5m
-  go: "1.23"
-  modules-download-mode: readonly
+        - gosimple
+        - revive
+        - staticcheck
+
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+

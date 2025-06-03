@@ -7,10 +7,16 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/aasumitro/asttax/internal/common"
+	"github.com/aasumitro/asttax/internal/util/cache"
+	"github.com/blocto/solana-go-sdk/rpc"
 	"github.com/spf13/viper"
+)
+
+const (
+	envStaging    = "staging"
+	envProduction = "production"
 )
 
 type (
@@ -20,15 +26,21 @@ type (
 		sync.RWMutex
 		ctx context.Context
 		// SERVER CONFIGURATION
-		ServerName    string `mapstructure:"SERVER_NAME"`
-		ServerVersion string `mapstructure:"SERVER_VERSION"`
-		// TELEGRAM CONFIGURATION
-		TelegramBotToken string `mapstructure:"TELEGRAM_BOT_TOKEN"`
+		ServerName        string `mapstructure:"SERVER_NAME"`
+		ServerVersion     string `mapstructure:"SERVER_VERSION"`
+		ServerEnvironment string `mapstructure:"SERVER_ENVIRONMENT"`
 		// DATASTORE URL
 		DatastoreDriver string `mapstructure:"DATASTORE_DRIVER"`
 		SQLiteDsnURL    string `mapstructure:"SQLITE_DSN_URL"`
+		// TELEGRAM CONFIGURATION
+		TelegramBotToken string `mapstructure:"TELEGRAM_BOT_TOKEN"`
+		// ENCRYPTION SECRET KEY
+		SecretKey string `mapstructure:"SECRET_KEY"`
+		// API URL
+		CoingeckoAPIURL string `mapstructure:"COINGECKO_API_URL"`
 		// APP DEPS
-		SQLPool *sql.DB
+		SQLPool   *sql.DB
+		CachePool *cache.Cache
 	}
 )
 
@@ -64,57 +76,18 @@ func LoadWith(
 	return instance
 }
 
-func SQLiteDBConnection() Option {
-	return func(cfg *Config) {
-		db, err := sql.Open(cfg.DatastoreDriver, cfg.SQLiteDsnURL)
-		if err != nil {
-			log.Fatalf("SQLITE_OPEN_ERROR: %v", err)
-		}
-		// Set SQLite PRAGMA configurations for optimized RW
-		pragmaStatements := []string{
-			"PRAGMA synchronous = OFF;",
-			"PRAGMA journal_mode = WAL;",
-			"PRAGMA temp_store = MEMORY;",
-		}
-		for _, pragma := range pragmaStatements {
-			if _, err := db.Exec(pragma); err != nil {
-				log.Fatalf("SQLITE_PRAGMA_ERROR: %v", err)
-			}
-		}
-		// Configure connection pooling
-		const dbMaxOpenConnection, dbMaxIdleConnection = 100, 10
-		db.SetMaxIdleConns(dbMaxIdleConnection)
-		db.SetMaxOpenConns(dbMaxOpenConnection)
-		db.SetConnMaxLifetime(time.Hour)
-		// Validate the database connection
-		if err := db.Ping(); err != nil {
-			log.Fatalf(fmt.Sprintf("SQLITE_PING_ERROR: %s", err.Error()))
-		}
-		// Assign the configured DB connection to the config
-		cfg.SQLPool = db
-		//
-		if err := cfg.initSQLiteDB(); err != nil {
-			log.Fatalf("SQLITE_INIT_ERROR: %s", err.Error())
-		}
-	}
+func (c *Config) GetServerIdentity() string {
+	return fmt.Sprintf("%s v%s",
+		c.ServerName, c.ServerVersion)
 }
 
-func (c *Config) initSQLiteDB() error {
-	c.Lock()
-	defer c.Unlock()
-	//goland:noinspection ALL
-	_, err := c.SQLPool.Exec(`CREATE TABLE IF NOT EXISTS users (
-      	id INTEGER PRIMARY KEY,
-      	telegram_id TEXT UNIQUE NOT NULL,
-        wallet_address TEXT UNIQUE NOT NULL,
-        private_key TEXT NOT NULL,
-        trade_fees FLOAT4 NOT NULL DEFAULT 0.0015, -- Fast: 0.0015 SOL, Turbo: 0.0075 SOL, Custom: by user
-        accept_aggrement BOOLEAN DEFAULT FALSE,  -- accept aggrement
-        confirm_trade_protection BOOLEAN DEFAULT FALSE,  -- Confirm Before Continue
-        mev_buy_protection BOOLEAN DEFAULT FALSE,  -- Maximal Extractable Value protection
-        mev_sell_protection BOOLEAN DEFAULT FALSE,  -- Maximal Extractable Value protection
-        buy_slippage INTEGER NOT NULL DEFAULT 15, -- default 15%
-        sell_slippage INTEGER NOT NULL  DEFAULT 15);  -- default 15%
-	CREATE INDEX IF NOT EXISTS idx_uid ON users (telegram_id);`)
-	return err
+func (c *Config) GetRPCEndpoint() string {
+	rpcEndpoint := rpc.DevnetRPCEndpoint
+	if c.ServerEnvironment == envStaging {
+		rpcEndpoint = rpc.TestnetRPCEndpoint
+	}
+	if c.ServerEnvironment == envProduction {
+		rpcEndpoint = rpc.MainnetRPCEndpoint
+	}
+	return rpcEndpoint
 }
